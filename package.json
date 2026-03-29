@@ -1,0 +1,15 @@
+{
+  "name": "favor-chain",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "bun src/index.ts",
+    "dev": "bun --watch src/index.ts"
+  },
+  "dependencies": {
+    "elysia": "latest",
+    "grammy": "latest",
+    "openai": "latest",
+    "@supabase/supabase-js": "latest"
+  }
+}
