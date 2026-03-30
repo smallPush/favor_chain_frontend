@@ -21,15 +21,21 @@ const processUserMessage = new ProcessUserMessage(aiService, dbService);
 // 3. Instanciar Entrypoints (Adaptadores de Entrada)
 const bot = new TelegramAdapter(TELEGRAM_TOKEN, processUserMessage);
 
-// 4. Iniciar Bot
-bot.start();
-
-// 5. Iniciar Servidor API (ElysiaJS)
-new Elysia()
+// 4. Iniciar Servidor API (ElysiaJS)
+const app = new Elysia()
   .post("/verify-subscription", async ({ body }: { body: { userId: string } }) => {
     const karma = await dbService.getUserKarma(body.userId);
     return { userId: body.userId, karma };
   })
-  .listen(3000);
+  .listen(3000, ({ hostname, port }) => {
+    console.log(`API de FavorChain corriendo en http://${hostname}:${port}`);
+  });
 
-console.log("API de FavorChain corriendo en el puerto 3000");
+// 5. Iniciar Bot
+bot.start().catch((err) => {
+  console.error("Error al iniciar el Bot de Telegram:", err);
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+});
