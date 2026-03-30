@@ -1,5 +1,5 @@
-// Archivo: src/index.ts
-import { Elysia } from "elysia";
+import { Elysia, t } from "elysia";
+import { cors } from "@elysiajs/cors";
 import { OpenRouterAdapter } from "./adapters/ai/OpenRouterAdapter";
 import { SupabaseAdapter } from "./adapters/db/SupabaseAdapter";
 import { TelegramAdapter } from "./adapters/bot/TelegramAdapter";
@@ -23,9 +23,17 @@ const bot = new TelegramAdapter(TELEGRAM_TOKEN, processUserMessage);
 
 // 4. Iniciar Servidor API (ElysiaJS)
 const app = new Elysia()
-  .post("/verify-subscription", async ({ body }: { body: { userId: string } }) => {
+  .use(cors())
+  .post("/verify-subscription", async ({ body }) => {
     const karma = await dbService.getUserKarma(body.userId);
     return { userId: body.userId, karma };
+  }, {
+    body: t.Object({ userId: t.String() })
+  })
+  .get("/karma/:userId", async ({ params: { userId } }) => {
+    const karma = await dbService.getUserKarma(userId);
+    const favors = await dbService.getUserFavors(userId);
+    return { userId, karma, favors };
   })
   .listen(3000, ({ hostname, port }) => {
     console.log(`API de FavorChain corriendo en http://${hostname}:${port}`);

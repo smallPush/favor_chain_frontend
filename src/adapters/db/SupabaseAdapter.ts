@@ -20,6 +20,17 @@ export class SupabaseAdapter implements DatabaseService {
     return data.karma;
   }
 
+  async getUserFavors(userId: string): Promise<any[]> {
+    const { data, error } = await this.client
+      .from("favors")
+      .select("id, description, karma_awarded, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error || !data) return [];
+    return data;
+  }
+
   async saveFavor(userId: string, description: string, karma: number): Promise<void> {
     // Primero guardamos el favor
     await this.client
