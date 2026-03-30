@@ -4,6 +4,7 @@ export interface Favor {
   id: number;
   description: string;
   karma_awarded: number;
+  entry_type: 'NECESIDAD' | 'BRAIN';
   created_at: string;
 }
 
@@ -18,5 +19,19 @@ export const getKarmaHistory = async (userId: string): Promise<KarmaResponse> =>
   if (!response.ok) {
     throw new Error('Error de red o usuario no encontrado');
   }
+  return response.json();
+};
+
+export interface AiLog {
+  id: string;
+  timestamp: string;
+  input: string;
+  output: string;
+  model: string;
+}
+
+export const getAiLogs = async (): Promise<AiLog[]> => {
+  const response = await fetch(`${API_URL}/api/logs`);
+  if (!response.ok) return [];
   return response.json();
 };

@@ -11,7 +11,8 @@
     "@supabase/supabase-js": "latest",
     "elysia": "latest",
     "grammy": "latest",
-    "openai": "latest"
+    "openai": "latest",
+    "postgres": "^3.4.8"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.27",

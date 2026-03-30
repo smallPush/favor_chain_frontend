@@ -4,12 +4,16 @@ import { OpenRouterAdapter } from "./adapters/ai/OpenRouterAdapter";
 import { SupabaseAdapter } from "./adapters/db/SupabaseAdapter";
 import { TelegramAdapter } from "./adapters/bot/TelegramAdapter";
 import { ProcessUserMessage } from "./domain/useCases/ProcessUserMessage";
+import { setupDatabase } from "./adapters/db/setupDatabase";
 
 // Configuración (Idealmente desde variables de entorno)
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || "";
 const SUPABASE_URL = process.env.SUPABASE_URL || "";
 const SUPABASE_KEY = process.env.SUPABASE_KEY || "";
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || "";
+
+// 🗄️ Iniciar Auto-Migración
+await setupDatabase();
 
 // 1. Instanciar Adaptadores (Infraestructura)
 const aiService = new OpenRouterAdapter(OPENROUTER_API_KEY);
@@ -34,6 +38,9 @@ const app = new Elysia()
     const karma = await dbService.getUserKarma(userId);
     const favors = await dbService.getUserFavors(userId);
     return { userId, karma, favors };
+  })
+  .get("/api/logs", () => {
+    return aiService.logs;
   })
   .listen(3000, ({ hostname, port }) => {
     console.log(`API de FavorChain corriendo en http://${hostname}:${port}`);
