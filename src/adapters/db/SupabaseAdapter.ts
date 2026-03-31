@@ -20,17 +20,28 @@ export class SupabaseAdapter implements DatabaseService {
     return data.karma;
   }
 
-  async saveFavor(userId: string, description: string, karma: number): Promise<void> {
-    // Primero guardamos el favor
-    await this.client
+  async getUserFavors(userId: string): Promise<any[]> {
+    const { data, error } = await this.client
       .from("favors")
-      .insert({ user_id: userId, description, karma_awarded: karma });
+      .select("id, description, karma_awarded, entry_type, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
 
-    // Luego actualizamos el karma del usuario
+    if (error || !data) return [];
+    return data;
+  }
+
+  async saveFavor(userId: string, description: string, karma: number, type: 'NECESIDAD' | 'BRAIN'): Promise<void> {
     const currentKarma = await this.getUserKarma(userId);
+
+    // Asegurar que el perfil existe (upsert) siempre
     await this.client
       .from("profiles")
-      .update({ karma: currentKarma + karma })
-      .eq("user_id", userId);
+      .upsert({ user_id: userId, karma: currentKarma + karma });
+
+    // Guardar la entrada con su tipo (NECESIDAD o BRAIN)
+    await this.client
+      .from("favors")
+      .insert({ user_id: userId, description, karma_awarded: karma, entry_type: type });
   }
 }
