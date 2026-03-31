@@ -14,8 +14,10 @@ export class ProcessUserMessage {
     let karmaAwarded = 0;
     if (analysis.type === "NECESIDAD") {
       karmaAwarded = 10;
-      await this.dbService.saveFavor(userId, analysis.summary, karmaAwarded);
     }
+
+    // Siempre guardar en base de datos, independientemente del tipo
+    await this.dbService.saveFavor(userId, analysis.summary, karmaAwarded, analysis.type);
 
     return {
       type: analysis.type,
