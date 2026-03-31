@@ -1,50 +1,47 @@
-# React + TypeScript + Vite
+# FavorChain - Frontend (Dashboard)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the web client for **FavorChain**, built with **React**, **TypeScript**, and **Vite**. This is where users can visualize their Karma history and view the AI monitor in real-time.
 
-Currently, two official plugins are available:
+## 🚀 Technologies
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 18**: Library for the user interface.
+- **TypeScript**: For safe and typed development.
+- **Vite**: Ultra-fast build tool.
+- **Tailwind CSS**: For a modern and responsive design.
+- **Lucide React**: Elegant icon set.
 
-## Expanding the ESLint configuration
+## 🛠️ Local Development
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+To run the frontend on your local machine:
 
-- Configure the top-level `parserOptions` property like this:
+1. **Install dependencies:**
+   ```bash
+   bun install
+   ```
+   *(You can also use `npm install` if you don't have Bun)*.
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+2. **Configure environment variables:**
+   Create a `.env` file in this folder with your API URL:
+   ```text
+   VITE_API_URL=http://localhost:3000
+   ```
+
+3. **Start development server:**
+   ```bash
+   bun run dev
+   ```
+   Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+## 📦 Build for Production
+
+To generate static files ready for deployment:
+
+```bash
+bun run build
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+The files will be generated in the `dist/` folder.
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+## 🐳 Docker
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+If you prefer using Docker, this project already includes an optimized multi-stage `Dockerfile` that compiles the app and serves it using **Nginx**. Refer to the root README for more details on the full deployment.

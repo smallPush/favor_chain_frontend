@@ -1,72 +1,97 @@
 # FavorChain
 
-**FavorChain** es una plataforma impulsada por Inteligencia Artificial y Bots de Telegram para emparejar necesidades de tu comunidad y gestionar tus apuntes/recordatorios personales ("Second Brain"). A través de esto, obtendrás puntos **Karma** por ayudar a otros.
+**FavorChain** is an AI-powered platform integrated with Telegram Bots to match community needs and manage your personal notes ("Second Brain"). Through this, you earn **Karma** points by helping others.
 
 ---
 
-## 🤖 Cómo empezar a usar el Bot en Telegram
+## 🤖 How to Start Using the Telegram Bot
 
-Para probar la plataforma, sigue estos simples pasos desde tu celular o computadora:
+Follow these simple steps from your phone or computer:
 
-### 1. Iniciar la conversación
-1. Abre Telegram y busca el `@nombre_de_tu_bot` (el que creaste con BotFather).
-2. Presiona el botón de **Iniciar** o escribe el comando:
+### 1. Start the Conversation
+1. Open Telegram and search for `@your_bot_username` (the one you created with BotFather).
+2. Press the **Start** button or type the command:
    ```text
    /start
    ```
-   El bot te dará la bienvenida y estará listo para escucharte.
+   The bot will welcome you and be ready to listen.
 
-### 2. Guardar conocimiento (Second Brain)
-Si quieres guardar un recordatorio, una nota importante, o algo que aprendiste, solo envíaselo como mensaje normal: 
-> **Tú:** "Acuérdate de que el framework ElysiaJS es muy rápido y se usa con Bun."
-> **Bot:** "Guardado en tu Second Brain: ElysiaJS + Bun..."
+### 2. Save Knowledge (Second Brain)
+To save a reminder, an important note, or something you learned, just send it as a normal message: 
+> **You:** "Remember that the ElysiaJS framework is very fast and used with Bun."
+> **Bot:** "Saved to your Second Brain: ElysiaJS + Bun..."
 
-### 3. Registrar un favor comunitario (Karma)
-El bot detectará automáticamente usando Inteligencia Artificial si el mensaje que acabas de enviar es una ayuda que le prestaste a otra persona. ¡Si es un favor, ganarás Karma!
-> **Tú:** "Hoy ayudé a mi vecino Pedro a cargar las bolsas del mercado hasta su departamento."
-> **Bot:** "Favor registrado: Ayuda cargando bolsas. ¡Has ganado 10 puntos de Karma!"
-
----
-
-## 💻 Cómo ver el historial de tu Karma (Frontend)
-
-El proyecto incluye un panel retro-futurista para consultar todos tus puntos acumulados.
-
-1. **Averigua tu ID de Telegram:** Tu "Usuario" real en el bot es numérico. Puedes obtenerlo hablando con bots como `@userinfobot`. 
-2. **Entra al Dashboard:**
-   Abre [http://localhost:5173](http://localhost:5173) en tu navegador.
-3. **Escanea/Busca tu usuario:**
-   Coloca tu ID numérico en la barra de búsqueda y verás instantáneamente los favores que realizaste y tu número de Karma total brillar en la pantalla.
+### 3. Register a Community Favor (Karma)
+The bot will automatically detect using AI if the message you just sent is a help you provided to another person. If it's a favor, you'll earn Karma!
+> **You:** "Today I helped my neighbor Pedro carry the grocery bags to his apartment."
+> **Bot:** "Favor registered: Helping with bags. You've earned 10 Karma points!"
 
 ---
 
-## 👥 Uso en Grupos Comunitarios (Hackathon)
+## 💻 How to View Your Karma History (Frontend)
 
-El verdadero potencial de **FavorChain** se libera en grupos vecinales, universitarios o comunidades enteras en Telegram:
+The project includes a retro-futuristic dashboard to check all your accumulated points.
 
-1. **Invita al Bot a tu Grupo:** Ve al perfil del bot y haz tap en "Añadir a un Grupo". Selecciona la comunidad donde quieras que actúe.
-2. **Configuración Inicial:** Por defecto, los bots no leen todos los mensajes de los grupos por privacidad. Si quieres que el bot escuche y empareje a la comunidad automáticamente debes ir a **BotFather**, seleccionar el bot, buscar los `Bot Settings` -> `Group Privacy` y marcarlo como **Turn Off "Enable Privacy Mode"**.
-3. **Karma Pasivo:** A partir de entonces, cuando dos personas conversen (ej. "Yo te presto mis apuntes Juan") el bot intervendrá orgánicamente para premiar sus buenas acciones sin necesidad de invocarlo.
+1. **Find your Telegram ID:** Your real "User" in the bot is numeric. You can get it by talking to bots like `@userinfobot`. 
+2. **Access the Dashboard:**
+   Open [http://localhost:5173](http://localhost:5173) in your browser.
+3. **Scan/Search your user:**
+   Enter your numeric ID in the search bar and you will instantly see the favors you performed and your total Karma glowing on the screen.
 
 ---
 
-## 🚀 Despliegue con Docker (Dockploy)
+## 👥 Use in Community Groups (Hackathon)
 
-Para levantar ambos entornos (Backend y Frontend) de forma aislada y profesional, puedes usar **Docker Compose**:
+The true potential of **FavorChain** is unleashed in neighborhood groups, universities, or entire Telegram communities:
 
-1. **Configura tus variables de entorno:**  
-   Asegúrate de que el archivo `.env` en la raíz tenga las claves de Supabase, OpenRouter y Telegram.
+1. **Invite the Bot to your Group:** Go to the bot's profile and tap "Add to a Group". Select the community where you want it to act.
+2. **Initial Setup:** By default, bots don't read all messages in groups for privacy. If you want the bot to automatically listen and match the community, you must go to **BotFather**, select the bot, go to `Bot Settings` -> `Group Privacy` and set it to **Turn Off "Enable Privacy Mode"**.
+3. **Passive Karma:** From then on, when two people talk (e.g., "I'll lend you my notes Juan"), the bot will organically intervene to reward their good deeds without needing to be invoked.
 
-2. **Construye y levanta los contenedores:**
+---
+
+## 🚀 Deployment with Docker (Dockploy)
+
+To bring up both environments (Backend and Frontend) in an isolated and professional way, you can use **Docker Compose**:
+
+1. **Configure your environment variables:**  
+   Ensure the `.env` file in the root has the keys for Supabase, OpenRouter, and Telegram.
+
+2. **Build and start the containers:**
    ```bash
    docker-compose up --build -d
    ```
 
-3. **Accede a las aplicaciones:**
+3. **Access the applications:**
    - **Frontend (Dashboard):** [http://localhost:5173](http://localhost:5173)
    - **Backend (API):** [http://localhost:3000](http://localhost:3000)
 
-4. **Ver logs:**
+4. **View logs:**
    ```bash
    docker-compose logs -f
    ```
+
+---
+
+## 🛠️ Backend Technical Details
+
+The **FavorChain** central server is designed using **Hexagonal Architecture** (Ports and Adapters) to ensure business logic is independent of external technology.
+
+### Technology Stack
+- **Bun**: Ultra-fast TypeScript runtime.
+- **ElysiaJS**: High-performance web framework for the API.
+- **Supabase (PostgreSQL)**: Persistence for profiles, Karma points, and favors.
+- **OpenRouter (OpenAI SDK)**: AI model orchestration (Gemini 1.5 Flash) for natural language analysis.
+- **grammY**: Robust framework for Telegram bot interaction.
+
+### Project Structure
+- `src/domain/`: Pure business logic and interface definitions (Ports).
+- `src/adapters/`: Concrete infrastructure implementations (Supabase, OpenRouter, Telegram).
+- `src/index.ts`: Entry point that orchestrates dependency injection and starts the services.
+
+### Development Execution
+To run only the backend outside of Docker:
+
+1. **Install dependencies**: `bun install`
+2. **Configure .env**: Use `.env.example` as a reference.
+3. **Start the server**: `bun run dev`
