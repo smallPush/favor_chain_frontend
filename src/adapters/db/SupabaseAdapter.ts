@@ -9,11 +9,12 @@ export class SupabaseAdapter implements DatabaseService {
     this.client = createClient(url, key);
   }
 
-  async getUserKarma(userId: string): Promise<number> {
+  async getUserKarma(userId: string, chatId: string): Promise<number> {
     const { data, error } = await this.client
       .from("profiles")
       .select("karma")
       .eq("user_id", userId)
+      .eq("chat_id", chatId)
       .single();
 
     if (error) {
@@ -25,11 +26,12 @@ export class SupabaseAdapter implements DatabaseService {
     return data?.karma || 0;
   }
 
-  async getUserFavors(userId: string): Promise<any[]> {
+  async getUserFavors(userId: string, chatId: string): Promise<any[]> {
     const { data, error } = await this.client
       .from("favors")
-      .select("id, user_id, description, karma_awarded, entry_type, status, completed_by, created_at")
+      .select("id, user_id, chat_id, description, karma_awarded, entry_type, status, completed_by, created_at")
       .eq("user_id", userId)
+      .eq("chat_id", chatId)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -68,13 +70,15 @@ export class SupabaseAdapter implements DatabaseService {
     return data || [];
   }
 
-  async saveFavor(userId: string, description: string, karma: number, type: 'NECESIDAD' | 'BRAIN', originalInput?: string, aiModel?: string): Promise<void> {
-    const currentKarma = await this.getUserKarma(userId);
+  async saveFavor(userId: string, description: string, karma: number, type: 'NECESIDAD' | 'BRAIN', originalInput?: string, aiModel?: string, chatId?: string): Promise<void> {
+    if (!chatId) return; // Karma must be associated with a chat
+
+    const currentKarma = await this.getUserKarma(userId, chatId);
 
     // Asegurar que el perfil existe (upsert) siempre
     const { error: profileError } = await this.client
       .from("profiles")
-      .upsert({ user_id: userId, karma: currentKarma + karma });
+      .upsert({ user_id: userId, chat_id: chatId, karma: currentKarma + karma });
 
     if (profileError) {
       console.error("❌ Error al actualizar el perfil de usuario:", profileError.message);
@@ -86,6 +90,7 @@ export class SupabaseAdapter implements DatabaseService {
       .from("favors")
       .insert({ 
         user_id: userId, 
+        chat_id: chatId,
         description, 
         karma_awarded: karma, 
         entry_type: type, 
@@ -100,7 +105,7 @@ export class SupabaseAdapter implements DatabaseService {
     }
   }
 
-  async completeFavor(favorId: string, completedByUserId: string, karmaAwarded: number): Promise<void> {
+  async completeFavor(favorId: string, completedByUserId: string, karmaAwarded: number, chatId: string): Promise<void> {
     // 1. Marcar el favor como completado
     const { error: updateError } = await this.client
       .from("favors")
@@ -113,10 +118,10 @@ export class SupabaseAdapter implements DatabaseService {
     }
 
     // 2. Darle el karma al usuario que lo ha hecho
-    const currentKarma = await this.getUserKarma(completedByUserId);
+    const currentKarma = await this.getUserKarma(completedByUserId, chatId);
     const { error: karmaError } = await this.client
       .from("profiles")
-      .upsert({ user_id: completedByUserId, karma: currentKarma + karmaAwarded });
+      .upsert({ user_id: completedByUserId, chat_id: chatId, karma: currentKarma + karmaAwarded });
 
     if (karmaError) {
       console.error("❌ Error al sumar karma al donante:", karmaError.message);

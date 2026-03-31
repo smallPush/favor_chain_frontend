@@ -46,9 +46,10 @@ export class TelegramAdapter {
       if (data.startsWith("fulfill_")) {
         const favorId = data.replace("fulfill_", "");
         const userId = ctx.from.id.toString();
+        const chatId = ctx.chat?.id.toString() || "";
 
         try {
-          const result = await this.fulfillFavor.execute(favorId, userId);
+          const result = await this.fulfillFavor.execute(favorId, userId, chatId);
           
           await ctx.answerCallbackQuery("¡Favor completado!");
           await ctx.editMessageText(`✅ **Favor Completado**\nHas ganado ${result.karmaAwarded} puntos de Karma. ¡Gracias por ayudar!`);
@@ -61,10 +62,11 @@ export class TelegramAdapter {
 
     this.bot.on("message:text", async (ctx) => {
       const userId = ctx.from.id.toString();
+      const chatId = ctx.chat.id.toString();
       const text = ctx.message.text;
 
       try {
-        const result = await this.processUserMessage.execute(userId, text);
+        const result = await this.processUserMessage.execute(userId, text, chatId);
         
         if (result.type === "NECESIDAD") {
           await ctx.reply(`Favor registrado: "${result.summary}". ¡Has ganado ${result.karmaAwarded} puntos de Karma! Otros usuarios lo verán en /favores.`);

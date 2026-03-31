@@ -36,15 +36,16 @@ const bot = new TelegramAdapter(TELEGRAM_TOKEN, processUserMessage, fulfillFavor
 const app = new Elysia()
   .use(cors())
   .post("/verify-subscription", async ({ body }) => {
-    const karma = await dbService.getUserKarma(body.userId);
+    const karma = await dbService.getUserKarma(body.userId, body.chatId || "global");
     return { userId: body.userId, karma };
   }, {
-    body: t.Object({ userId: t.String() })
+    body: t.Object({ userId: t.String(), chatId: t.Optional(t.String()) })
   })
-  .get("/karma/:userId", async ({ params: { userId } }) => {
-    const karma = await dbService.getUserKarma(userId);
-    const favors = await dbService.getUserFavors(userId);
-    return { userId, karma, favors };
+  .get("/karma/:userId", async ({ params: { userId }, query: { chatId } }) => {
+    const cid = chatId || "global";
+    const karma = await dbService.getUserKarma(userId, cid);
+    const favors = await dbService.getUserFavors(userId, cid);
+    return { userId, chatId: cid, karma, favors };
   })
   .get("/api/logs", async () => {
     const recentFavors = await dbService.getRecentLogs(50);
