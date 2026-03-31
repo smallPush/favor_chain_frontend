@@ -1,6 +1,9 @@
 {
   "name": "favor-chain",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=22"
+  },
   "main": "src/index.ts",
   "scripts": {
     "start": "bun src/index.ts",
