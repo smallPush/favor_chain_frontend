@@ -22,15 +22,23 @@ export class SupabaseAdapter implements DatabaseService {
 
   async saveFavor(userId: string, description: string, karma: number): Promise<void> {
     // Primero guardamos el favor
-    await this.client
+    const { error: favorError } = await this.client
       .from("favors")
       .insert({ user_id: userId, description, karma_awarded: karma });
 
+    if (favorError) {
+      throw new Error(`Error saving favor: ${favorError.message}`);
+    }
+
     // Luego actualizamos el karma del usuario
     const currentKarma = await this.getUserKarma(userId);
-    await this.client
+    const { error: profileError } = await this.client
       .from("profiles")
       .update({ karma: currentKarma + karma })
       .eq("user_id", userId);
+
+    if (profileError) {
+      throw new Error(`Error updating profile karma: ${profileError.message}`);
+    }
   }
 }
