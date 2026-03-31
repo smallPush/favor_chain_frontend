@@ -15,11 +15,18 @@ CREATE TABLE IF NOT EXISTS public.favors (
   description TEXT NOT NULL,
   karma_awarded INTEGER NOT NULL,
   entry_type TEXT NOT NULL DEFAULT 'NECESIDAD', -- 'NECESIDAD' o 'BRAIN'
+  status TEXT NOT NULL DEFAULT 'PENDING',        -- 'PENDING' o 'COMPLETED'
+  completed_by TEXT REFERENCES public.profiles(user_id), -- Quién lo hizo
+  original_input TEXT,                           -- Mensaje original antes de resumir
+  ai_model TEXT,                                 -- Modelo de IA utilizado
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 2b. Si ya tienes la tabla, añade la columna manualmente con:
--- ALTER TABLE public.favors ADD COLUMN IF NOT EXISTS entry_type TEXT NOT NULL DEFAULT 'NECESIDAD';
+-- 2b. MIGRACIONES (Ejecuta esto si ya tienes las tablas creadas):
+-- ALTER TABLE public.favors ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'PENDING';
+-- ALTER TABLE public.favors ADD COLUMN IF NOT EXISTS completed_by TEXT REFERENCES public.profiles(user_id);
+-- ALTER TABLE public.favors ADD COLUMN IF NOT EXISTS original_input TEXT;
+-- ALTER TABLE public.favors ADD COLUMN IF NOT EXISTS ai_model TEXT;
 
 -- 3. Políticas de Seguridad (RLS - Permite al servidor leer y escribir sin problemas)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;

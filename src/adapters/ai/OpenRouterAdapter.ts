@@ -12,7 +12,6 @@ export interface AiLog {
 
 export class OpenRouterAdapter implements IAIService {
   private openai: OpenAI;
-  public logs: AiLog[] = [];
 
   constructor(apiKey: string) {
     this.openai = new OpenAI({
@@ -25,7 +24,7 @@ export class OpenRouterAdapter implements IAIService {
     });
   }
 
-  async analyzeMessage(text: string): Promise<{ type: 'NECESIDAD' | 'BRAIN'; summary: string }> {
+  async analyzeMessage(text: string): Promise<{ type: 'NECESIDAD' | 'BRAIN'; summary: string; model: string }> {
     const response = await this.openai.chat.completions.create({
       model: "openrouter/free",
       messages: [
@@ -42,20 +41,9 @@ export class OpenRouterAdapter implements IAIService {
     const content = JSON.parse(body);
     const result = {
       type: content.type || "BRAIN",
-      summary: content.summary || text.substring(0, 50)
+      summary: content.summary || text.substring(0, 50),
+      model: response.model || "google/gemini-1.5-flash"
     };
-
-    // Añadir log a la memoria temporal (limitado a 50)
-    const newLog: AiLog = {
-      id: Math.random().toString(36).substr(2, 9),
-      timestamp: new Date().toISOString(),
-      input: text,
-      output: JSON.stringify(result, null, 2),
-      model: response.model || "openrouter/free"
-    };
-    
-    this.logs.unshift(newLog);
-    if (this.logs.length > 50) this.logs.pop();
 
     return result;
   }

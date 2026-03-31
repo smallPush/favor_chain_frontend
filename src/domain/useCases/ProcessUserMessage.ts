@@ -17,7 +17,7 @@ export class ProcessUserMessage {
     }
 
     // Siempre guardar en base de datos, independientemente del tipo
-    await this.dbService.saveFavor(userId, analysis.summary, karmaAwarded, analysis.type);
+    await this.dbService.saveFavor(userId, analysis.summary, karmaAwarded, analysis.type, text, analysis.model);
 
     return {
       type: analysis.type,

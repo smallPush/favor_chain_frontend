@@ -9,8 +9,11 @@ export async function setupDatabase() {
     return;
   }
 
+  console.log(`🔗 URL de conexión leída: ${connectionString}`);
+
+
   console.log("🛠 Conectando a Postgres/Supabase y verificando tablas...");
-  
+
   const sql = postgres(connectionString, { ssl: "require" });
 
   try {

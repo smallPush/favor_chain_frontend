@@ -16,32 +16,111 @@ export class SupabaseAdapter implements DatabaseService {
       .eq("user_id", userId)
       .single();
 
-    if (error || !data) return 0;
-    return data.karma;
+    if (error) {
+      if (error.code !== "PGRST116") { // PGRST116 es 'no encontrado'
+        console.error("❌ Error al obtener karma en Supabase:", error.message, error.details);
+      }
+      return 0;
+    }
+    return data?.karma || 0;
   }
 
   async getUserFavors(userId: string): Promise<any[]> {
     const { data, error } = await this.client
       .from("favors")
-      .select("id, description, karma_awarded, entry_type, created_at")
+      .select("id, user_id, description, karma_awarded, entry_type, status, completed_by, created_at")
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
-    if (error || !data) return [];
-    return data;
+    if (error) {
+      console.error("❌ Error al obtener favores del usuario:", error.message);
+      return [];
+    }
+    return data || [];
   }
 
-  async saveFavor(userId: string, description: string, karma: number, type: 'NECESIDAD' | 'BRAIN'): Promise<void> {
+  async getPendingFavors(): Promise<any[]> {
+    const { data, error } = await this.client
+      .from("favors")
+      .select("id, user_id, description, karma_awarded, entry_type, status, created_at")
+      .eq("status", "PENDING")
+      .eq("entry_type", "NECESIDAD")
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error("❌ Error al obtener favores pendientes:", error.message);
+      return [];
+    }
+    return data || [];
+  }
+
+  async getRecentLogs(limit: number = 50): Promise<any[]> {
+    const { data, error } = await this.client
+      .from("favors")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error("❌ Error al obtener logs recientes:", error.message);
+      return [];
+    }
+    return data || [];
+  }
+
+  async saveFavor(userId: string, description: string, karma: number, type: 'NECESIDAD' | 'BRAIN', originalInput?: string, aiModel?: string): Promise<void> {
     const currentKarma = await this.getUserKarma(userId);
 
     // Asegurar que el perfil existe (upsert) siempre
-    await this.client
+    const { error: profileError } = await this.client
       .from("profiles")
       .upsert({ user_id: userId, karma: currentKarma + karma });
 
+    if (profileError) {
+      console.error("❌ Error al actualizar el perfil de usuario:", profileError.message);
+      throw new Error(`Fallo persistiendo perfil: ${profileError.message}`);
+    }
+
     // Guardar la entrada con su tipo (NECESIDAD o BRAIN)
-    await this.client
+    const { error: favorError } = await this.client
       .from("favors")
-      .insert({ user_id: userId, description, karma_awarded: karma, entry_type: type });
+      .insert({ 
+        user_id: userId, 
+        description, 
+        karma_awarded: karma, 
+        entry_type: type, 
+        status: 'PENDING',
+        original_input: originalInput,
+        ai_model: aiModel
+      });
+
+    if (favorError) {
+      console.error("❌ Error al insertar el favor:", favorError.message);
+      throw new Error(`Fallo insertando favor: ${favorError.message}`);
+    }
+  }
+
+  async completeFavor(favorId: string, completedByUserId: string, karmaAwarded: number): Promise<void> {
+    // 1. Marcar el favor como completado
+    const { error: updateError } = await this.client
+      .from("favors")
+      .update({ status: 'COMPLETED', completed_by: completedByUserId })
+      .eq("id", favorId);
+
+    if (updateError) {
+      console.error("❌ Error al completar el favor en BD:", updateError.message);
+      throw new Error(`Fallo completando favor: ${updateError.message}`);
+    }
+
+    // 2. Darle el karma al usuario que lo ha hecho
+    const currentKarma = await this.getUserKarma(completedByUserId);
+    const { error: karmaError } = await this.client
+      .from("profiles")
+      .upsert({ user_id: completedByUserId, karma: currentKarma + karmaAwarded });
+
+    if (karmaError) {
+      console.error("❌ Error al sumar karma al donante:", karmaError.message);
+      throw new Error(`Fallo sumando karma: ${karmaError.message}`);
+    }
   }
 }
