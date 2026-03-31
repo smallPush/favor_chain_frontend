@@ -47,3 +47,26 @@ El verdadero potencial de **FavorChain** se libera en grupos vecinales, universi
 1. **Invita al Bot a tu Grupo:** Ve al perfil del bot y haz tap en "Añadir a un Grupo". Selecciona la comunidad donde quieras que actúe.
 2. **Configuración Inicial:** Por defecto, los bots no leen todos los mensajes de los grupos por privacidad. Si quieres que el bot escuche y empareje a la comunidad automáticamente debes ir a **BotFather**, seleccionar el bot, buscar los `Bot Settings` -> `Group Privacy` y marcarlo como **Turn Off "Enable Privacy Mode"**.
 3. **Karma Pasivo:** A partir de entonces, cuando dos personas conversen (ej. "Yo te presto mis apuntes Juan") el bot intervendrá orgánicamente para premiar sus buenas acciones sin necesidad de invocarlo.
+
+---
+
+## 🚀 Despliegue con Docker (Dockploy)
+
+Para levantar ambos entornos (Backend y Frontend) de forma aislada y profesional, puedes usar **Docker Compose**:
+
+1. **Configura tus variables de entorno:**  
+   Asegúrate de que el archivo `.env` en la raíz tenga las claves de Supabase, OpenRouter y Telegram.
+
+2. **Construye y levanta los contenedores:**
+   ```bash
+   docker-compose up --build -d
+   ```
+
+3. **Accede a las aplicaciones:**
+   - **Frontend (Dashboard):** [http://localhost:5173](http://localhost:5173)
+   - **Backend (API):** [http://localhost:3000](http://localhost:3000)
+
+4. **Ver logs:**
+   ```bash
+   docker-compose logs -f
+   ```

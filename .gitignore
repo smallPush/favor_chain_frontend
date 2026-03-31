@@ -8,3 +8,4 @@ client/node_modules/
 client/dist/
 backend.log
 frontend.log
+backend_new.log
