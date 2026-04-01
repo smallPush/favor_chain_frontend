@@ -12,6 +12,7 @@ function App() {
   // State del Monitor de IA y Ranking
   const [logs, setLogs] = useState<AiLog[]>([]);
   const [leaderboard, setLeaderboard] = useState<RankingEntry[]>([]);
+  const [isLoadingRanking, setIsLoadingRanking] = useState(true);
 
   useEffect(() => {
     // Polling cada 2 segundos para obtener los logs en tiempo real
@@ -27,10 +28,11 @@ function App() {
       // Fetch Ranking
       try {
         const topUsers = await getRanking();
-        console.log("🏆 Leaderboard data received:", topUsers);
         setLeaderboard(topUsers);
       } catch (e) {
         console.error("❌ Error fetching ranking:", e);
+      } finally {
+        setIsLoadingRanking(false);
       }
     };
     
@@ -75,8 +77,9 @@ function App() {
             <div className="inline-flex items-center justify-center p-3 bg-emerald-500/10 rounded-full mb-2 border border-emerald-500/20">
               <Trophy className="w-8 h-8 text-emerald-400" />
             </div>
-            <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent flex items-center gap-3">
               FavorChain Karma
+              <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30 uppercase tracking-tighter">Unified v1.2</span>
             </h1>
             <p className="text-slate-400">Rastrea el historial de favores y puntos comunitarios</p>
           </div>
@@ -88,8 +91,10 @@ function App() {
             </h2>
             
             <div className="grid grid-cols-1 gap-3">
-              {leaderboard.length === 0 ? (
-                <p className="text-xs text-slate-500">Cargando ranking...</p>
+              {isLoadingRanking ? (
+                <p className="text-xs text-slate-500 animate-pulse">Cargando ranking global...</p>
+              ) : leaderboard.length === 0 ? (
+                <p className="text-xs text-slate-500 italic p-2 bg-slate-900/50 rounded-lg">No hay datos de ranking disponibles todavía.</p>
               ) : (
                 leaderboard.slice(0, 5).map((entry, idx) => (
                   <div key={entry.user_id} className="flex items-center justify-between p-3 bg-slate-900 border border-slate-800/50 rounded-2xl group hover:border-emerald-500/30 transition-all">
