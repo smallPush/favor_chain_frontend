@@ -243,4 +243,19 @@ export class SupabaseAdapter implements DatabaseService {
       .sort((a: any, b: any) => b.karma - a.karma)
       .slice(0, limit) as any;
   }
+
+  async findUserIdByName(name: string): Promise<string | null> {
+    const { data, error } = await this.client
+      .from("profiles")
+      .select("user_id, karma")
+      .ilike("user_name", `%${name}%`) // Búsqueda flexible parcial, insensible a mayúsculas
+      .order("karma", { ascending: false })
+      .limit(1);
+
+    if (error || !data || data.length === 0) {
+      return null;
+    }
+
+    return data[0].user_id;
+  }
 }

@@ -43,10 +43,21 @@ const app = new Elysia()
     body: t.Object({ userId: t.String(), chatId: t.Optional(t.String()) })
   })
   .get("/karma/:userId", async ({ params: { userId }, query: { chatId } }) => {
+    let targetUserId = userId;
+
+    // Si no es un número, intentamos buscar por nombre/nickname
+    if (isNaN(Number(userId))) {
+      const resolvedId = await dbService.findUserIdByName(userId);
+      if (!resolvedId) {
+        return { userId, karma: 0, favors: [], error: "Usuario no encontrado por nombre" };
+      }
+      targetUserId = resolvedId;
+    }
+
     const cid = chatId || "global";
-    const karma = await dbService.getUserKarma(userId, cid);
-    const favors = await dbService.getUserFavors(userId, cid);
-    return { userId, chatId: cid, karma, favors };
+    const karma = await dbService.getUserKarma(targetUserId, cid);
+    const favors = await dbService.getUserFavors(targetUserId, cid);
+    return { userId: targetUserId, chatId: cid, karma, favors };
   })
   .get("/api/logs", async () => {
     const recentFavors = await dbService.getRecentLogs(50);

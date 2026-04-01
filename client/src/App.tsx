@@ -51,7 +51,12 @@ function App() {
     
     try {
       const response = await getKarmaHistory(userId);
-      setData(response);
+      if ((response as any).error) {
+        setError((response as any).error);
+        setData(null);
+      } else {
+        setData(response);
+      }
     } catch (err: any) {
       setError(err.message || 'Error occurred');
       setData(null);
@@ -134,7 +139,7 @@ function App() {
             <input
               type="text"
               className="block w-full pl-11 pr-32 py-4 bg-slate-900 border border-slate-700/50 rounded-2xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all"
-              placeholder="Tu ID de Telegram (ej. 12345678)"
+              placeholder="Tu ID o Nickname (ej. 12345 o Ruben)"
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
             />

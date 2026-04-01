@@ -26,4 +26,5 @@ export interface DatabaseService {
   deleteValidation(pollId: string): Promise<void>;
   getLeaderboard(chatId: string, limit?: number): Promise<{ user_id: string, user_name?: string, karma: number }[]>;
   getGlobalLeaderboard(limit?: number): Promise<{ user_id: string, user_name?: string, karma: number }[]>;
+  findUserIdByName(name: string): Promise<string | null>;
 }
