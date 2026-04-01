@@ -4,34 +4,37 @@ import { SupabaseAdapter } from "./SupabaseAdapter";
 mock.module("@supabase/supabase-js", () => {
   return {
     createClient: mock(() => {
-      const mockSingle = mock().mockResolvedValue({ data: { karma: 50 }, error: null });
+      // Mock result as an array of objects (to support aggregation)
+      const mockResult = { data: [{ karma: 50 }], error: null };
       
-      // Mock that supports chaining .eq().eq().single()
-      const mockEq = mock(() => {
-        return { 
-          eq: mockEq, 
-          single: mockSingle,
-          order: mock(() => ({ ascending: mock(() => ({})) })) 
-        };
-      });
-
-      const mockSelect = mock().mockReturnValue({ eq: mockEq });
-      const mockInsert = mock().mockResolvedValue({ error: null });
-      const mockUpsert = mock().mockResolvedValue({ error: null });
-      const mockUpdate = mock().mockReturnValue({ eq: mock().mockResolvedValue({ error: null }) });
-
-      const mockFrom = mock((table: string) => {
-        if (table === "profiles") {
-          return { select: mockSelect, update: mockUpdate, upsert: mockUpsert };
-        }
-        if (table === "favors") {
-          return { insert: mockInsert, select: mockSelect };
-        }
-        return {};
-      });
+      const mockQueryChain: any = {
+        eq: mock(() => mockQueryChain),
+        select: mock(() => mockQueryChain),
+        order: mock(() => mockQueryChain),
+        single: mock().mockResolvedValue({ data: { karma: 50 }, error: null }),
+        gt: mock(() => mockQueryChain),
+        limit: mock(() => mockQueryChain),
+        // Make the mock awaitable (thenable) to handle "await query"
+        then: (resolve: any) => resolve(mockResult)
+      };
 
       return {
-        from: mockFrom,
+        from: mock((table: string) => {
+          if (table === "profiles") {
+            return { 
+              select: mock(() => mockQueryChain), 
+              update: mock(() => mockQueryChain), 
+              upsert: mock().mockResolvedValue({ error: null }) 
+            };
+          }
+          if (table === "favors") {
+            return { 
+              insert: mock().mockResolvedValue({ error: null }), 
+              select: mock(() => mockQueryChain) 
+            };
+          }
+          return mockQueryChain;
+        }),
       };
     }),
   };
