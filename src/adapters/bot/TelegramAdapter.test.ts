@@ -21,6 +21,11 @@ mock.module("grammy", () => {
 });
 
 describe("TelegramAdapter", () => {
+  const mockFulfillFavor = {
+    getPendingFavors: mock().mockResolvedValue([]),
+    execute: mock().mockResolvedValue({ karmaAwarded: 10 }),
+  } as any;
+
   test("should setup handlers and handle start command", async () => {
     // Reset handlers
     mockCommandHandlers = {};
@@ -30,7 +35,7 @@ describe("TelegramAdapter", () => {
       execute: mock().mockResolvedValue({ type: "NECESIDAD", summary: "Need help", karmaAwarded: 10 }),
     } as unknown as ProcessUserMessage;
 
-    const adapter = new TelegramAdapter("fake-token", mockProcessUserMessage);
+    const adapter = new TelegramAdapter("fake-token", mockProcessUserMessage, mockFulfillFavor);
 
     expect(mockCommandHandlers["start"]).toBeDefined();
     expect(mockMessageHandlers["message:text"]).toBeDefined();
@@ -38,11 +43,12 @@ describe("TelegramAdapter", () => {
     const mockCtx = {
       reply: mock().mockResolvedValue({}),
       from: { id: 123 },
+      chat: { id: 123 },
       message: { text: "Hello" },
     };
 
     await mockCommandHandlers["start"](mockCtx);
-    expect(mockCtx.reply).toHaveBeenCalledWith("¡Bienvenido a FavorChain! Cuéntame qué necesitas o qué quieres guardar en tu cerebro.");
+    expect(mockCtx.reply).toHaveBeenCalledWith("¡Bienvenido a FavorChain! Cuéntame qué necesitas o qué quieres guardar en tu cerebro. Usa /favores para ver qué necesitan otros.");
   });
 
   test("should handle NECESIDAD text message", async () => {
@@ -50,18 +56,19 @@ describe("TelegramAdapter", () => {
       execute: mock().mockResolvedValue({ type: "NECESIDAD", summary: "Need help", karmaAwarded: 10 }),
     } as unknown as ProcessUserMessage;
 
-    const adapter = new TelegramAdapter("fake-token", mockProcessUserMessage);
+    const adapter = new TelegramAdapter("fake-token", mockProcessUserMessage, mockFulfillFavor);
 
     const mockCtx = {
       reply: mock().mockResolvedValue({}),
       from: { id: 123 },
+      chat: { id: 123 },
       message: { text: "I need help" },
     };
 
     await mockMessageHandlers["message:text"](mockCtx);
 
-    expect(mockProcessUserMessage.execute).toHaveBeenCalledWith("123", "I need help");
-    expect(mockCtx.reply).toHaveBeenCalledWith('Favor registrado: "Need help". ¡Has ganado 10 puntos de Karma!');
+    expect(mockProcessUserMessage.execute).toHaveBeenCalledWith("123", "I need help", "123");
+    expect(mockCtx.reply).toHaveBeenCalledWith('Favor registrado: "Need help". ¡Has ganado 10 puntos de Karma! Otros usuarios lo verán en /favores.');
   });
 
   test("should handle BRAIN text message", async () => {
@@ -69,17 +76,18 @@ describe("TelegramAdapter", () => {
       execute: mock().mockResolvedValue({ type: "BRAIN", summary: "App idea", karmaAwarded: 0 }),
     } as unknown as ProcessUserMessage;
 
-    const adapter = new TelegramAdapter("fake-token", mockProcessUserMessage);
+    const adapter = new TelegramAdapter("fake-token", mockProcessUserMessage, mockFulfillFavor);
 
     const mockCtx = {
       reply: mock().mockResolvedValue({}),
       from: { id: 123 },
+      chat: { id: 123 },
       message: { text: "App idea" },
     };
 
     await mockMessageHandlers["message:text"](mockCtx);
 
-    expect(mockProcessUserMessage.execute).toHaveBeenCalledWith("123", "App idea");
+    expect(mockProcessUserMessage.execute).toHaveBeenCalledWith("123", "App idea", "123");
     expect(mockCtx.reply).toHaveBeenCalledWith('Guardado en tu Second Brain: "App idea".');
   });
 
@@ -88,11 +96,12 @@ describe("TelegramAdapter", () => {
       execute: mock().mockRejectedValue(new Error("Test error")),
     } as unknown as ProcessUserMessage;
 
-    const adapter = new TelegramAdapter("fake-token", mockProcessUserMessage);
+    const adapter = new TelegramAdapter("fake-token", mockProcessUserMessage, mockFulfillFavor);
 
     const mockCtx = {
       reply: mock().mockResolvedValue({}),
       from: { id: 123 },
+      chat: { id: 123 },
       message: { text: "App idea" },
     };
 
@@ -111,7 +120,7 @@ describe("TelegramAdapter", () => {
       execute: mock(),
     } as unknown as ProcessUserMessage;
 
-    const adapter = new TelegramAdapter("fake-token", mockProcessUserMessage);
+    const adapter = new TelegramAdapter("fake-token", mockProcessUserMessage, mockFulfillFavor);
     await adapter.start();
 
     expect(mockStart).toHaveBeenCalled();

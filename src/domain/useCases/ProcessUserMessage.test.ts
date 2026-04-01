@@ -15,10 +15,10 @@ describe("ProcessUserMessage", () => {
     };
 
     const processUserMessage = new ProcessUserMessage(mockAiService, mockDbService);
-    const result = await processUserMessage.execute("user-1", "I need help moving my couch");
+    const result = await processUserMessage.execute("user-1", "I need help moving my couch", "chat-1");
 
     expect(mockAiService.analyzeMessage).toHaveBeenCalledWith("I need help moving my couch");
-    expect(mockDbService.saveFavor).toHaveBeenCalledWith("user-1", "Need help moving", 10);
+    expect(mockDbService.saveFavor).toHaveBeenCalledWith("user-1", "Need help moving", 10, "NECESIDAD", "I need help moving my couch", undefined, "chat-1");
     expect(result).toEqual({
       type: "NECESIDAD",
       summary: "Need help moving",
@@ -26,7 +26,7 @@ describe("ProcessUserMessage", () => {
     });
   });
 
-  test("should process BRAIN message, award no karma and not save favor", async () => {
+  test("should process BRAIN message, award no karma but still save favor", async () => {
     const mockAiService: IAIService = {
       analyzeMessage: mock(async () => ({ type: "BRAIN", summary: "Idea for an app" })),
     };
@@ -37,10 +37,10 @@ describe("ProcessUserMessage", () => {
     };
 
     const processUserMessage = new ProcessUserMessage(mockAiService, mockDbService);
-    const result = await processUserMessage.execute("user-2", "I have a great idea for an app");
+    const result = await processUserMessage.execute("user-2", "I have a great idea for an app", "chat-2");
 
     expect(mockAiService.analyzeMessage).toHaveBeenCalledWith("I have a great idea for an app");
-    expect(mockDbService.saveFavor).not.toHaveBeenCalled();
+    expect(mockDbService.saveFavor).toHaveBeenCalledWith("user-2", "Idea for an app", 0, "BRAIN", "I have a great idea for an app", undefined, "chat-2");
     expect(result).toEqual({
       type: "BRAIN",
       summary: "Idea for an app",

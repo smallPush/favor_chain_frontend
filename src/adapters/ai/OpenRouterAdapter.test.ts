@@ -34,6 +34,7 @@ describe("OpenRouterAdapter", () => {
     expect(result).toEqual({
       type: "NECESIDAD",
       summary: "Need help moving couch",
+      model: "google/gemini-1.5-flash",
     });
   });
 });
