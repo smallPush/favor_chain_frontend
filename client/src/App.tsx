@@ -15,17 +15,28 @@ function App() {
 
   useEffect(() => {
     // Polling cada 2 segundos para obtener los logs en tiempo real
-    const fetchLogs = async () => {
+    const fetchData = async () => {
+      // Fetch Logs
       try {
-        const [latestLogs, topUsers] = await Promise.all([getAiLogs(), getRanking()]);
+        const latestLogs = await getAiLogs();
         setLogs(latestLogs);
+      } catch (e) {
+        console.error("❌ Error fetching logs:", e);
+      }
+
+      // Fetch Ranking
+      try {
+        const topUsers = await getRanking();
+        console.log("🏆 Leaderboard data received:", topUsers);
         setLeaderboard(topUsers);
       } catch (e) {
-        // Ignorar errores de red para el monitor silencioso
+        console.error("❌ Error fetching ranking:", e);
       }
     };
-    fetchLogs();
-    const interval = setInterval(fetchLogs, 2000);
+    
+    console.log("🚀 FavorChain App v1.1 - Ranking Enabled");
+    fetchData();
+    const interval = setInterval(fetchData, 3000);
     return () => clearInterval(interval);
   }, []);
 

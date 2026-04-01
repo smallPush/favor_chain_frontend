@@ -1,5 +1,6 @@
 import { Elysia, t } from "elysia";
 import { cors } from "@elysiajs/cors";
+import { staticPlugin } from "@elysiajs/static";
 import { OpenRouterAdapter } from "./adapters/ai/OpenRouterAdapter";
 import { SupabaseAdapter } from "./adapters/db/SupabaseAdapter";
 import { TelegramAdapter } from "./adapters/bot/TelegramAdapter";
@@ -60,6 +61,11 @@ const app = new Elysia()
   .get("/api/ranking", async () => {
     return await fulfillFavor.getGlobalLeaderboard();
   })
+  .use(staticPlugin({
+    assets: "client/dist",
+    prefix: "/"
+  }))
+  .get("*", () => Bun.file("client/dist/index.html"))
   .listen(3000, ({ hostname, port }) => {
     console.log(`API de FavorChain corriendo en http://${hostname}:${port}`);
   });
