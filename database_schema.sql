@@ -48,6 +48,18 @@ CREATE TABLE IF NOT EXISTS public.favors (
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.favors ENABLE ROW LEVEL SECURITY;
 
+-- 4. Tabla para validaciones de encuestas (Polls)
+CREATE TABLE IF NOT EXISTS public.favor_validations (
+  poll_id TEXT PRIMARY KEY,
+  favor_id UUID NOT NULL,
+  user_id TEXT NOT NULL,
+  chat_id TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  FOREIGN KEY (favor_id) REFERENCES public.favors(id) ON DELETE CASCADE
+);
+
+ALTER TABLE public.favor_validations ENABLE ROW LEVEL SECURITY;
+
 -- Nota: Como estás accediendo desde un Backend con tu 'SUPABASE_KEY' (Service Role Key),
 -- el backend siempre tendrá permiso total e ignorará el RLS.
 -- Opcionalmente, puedes añadir políticas públicas si en el futuro decides que el frontend haga un select directo.

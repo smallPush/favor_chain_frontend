@@ -46,16 +46,58 @@ export class TelegramAdapter {
       if (data.startsWith("fulfill_")) {
         const favorId = data.replace("fulfill_", "");
         const userId = ctx.from.id.toString();
+        const userName = ctx.from.first_name || "Usuario";
         const chatId = ctx.chat?.id.toString() || "";
 
         try {
-          const result = await this.fulfillFavor.execute(favorId, userId, chatId);
+          const favor = await this.fulfillFavor.getFavorById(favorId);
+          if (!favor) {
+            return ctx.answerCallbackQuery("Error: Favor no encontrado.");
+          }
+
+          // Iniciar encuesta de validación
+          const poll = await ctx.replyWithPoll(
+            `🗳️ ¿Confirmáis que ${userName} ha realizado el favor: "${favor.description}"?`,
+            ["✅ Sí, lo ha hecho", "❌ No, aún no"],
+            { 
+              is_anonymous: false, 
+              open_period: 60, // 1 minuto para votar
+              reply_to_message_id: ctx.callbackQuery.message?.message_id
+            }
+          );
+
+          await this.fulfillFavor.createValidation(poll.poll.id, favorId, userId, chatId);
           
-          await ctx.answerCallbackQuery("¡Favor completado!");
-          await ctx.editMessageText(`✅ **Favor Completado**\nHas ganado ${result.karmaAwarded} puntos de Karma. ¡Gracias por ayudar!`);
+          await ctx.answerCallbackQuery("¡Encuesta de validación iniciada!");
+          await ctx.editMessageText(`⏳ **Validación en curso**\nEsperando votos para confirmar que "${favor.description}" ha sido completado.`);
         } catch (error) {
           console.error(error);
-          await ctx.answerCallbackQuery("Error al completar el favor.");
+          await ctx.answerCallbackQuery("Error al iniciar la validación.");
+        }
+      }
+    });
+
+    // Escuchar el cierre de encuestas para procesar resultados
+    this.bot.on("poll", async (ctx) => {
+      const poll = ctx.poll;
+      
+      if (poll.is_closed) {
+        try {
+          const yesVotes = poll.options[0].voter_count;
+          const noVotes = poll.options[1].voter_count;
+          const isSuccessful = yesVotes > noVotes && yesVotes > 0;
+
+          const validation = await this.fulfillFavor.resolveValidation(poll.id, isSuccessful);
+          
+          if (validation) {
+            if (isSuccessful) {
+              await this.bot.api.sendMessage(validation.chatId, `✅ **Favor Validado**\nLa comunidad ha confirmado la tarea. ¡Se han asignado los puntos de Karma!`);
+            } else {
+              await this.bot.api.sendMessage(validation.chatId, `❌ **Favor no Validado**\nLa encuesta ha terminado sin votos suficientes o con mayoría negativa.`);
+            }
+          }
+        } catch (error) {
+          console.error("Error al procesar resultado de encuesta:", error);
         }
       }
     });

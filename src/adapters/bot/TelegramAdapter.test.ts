@@ -16,6 +16,9 @@ mock.module("grammy", () => {
         mockMessageHandlers[event] = handler;
       }
       react = mock();
+      api = {
+        sendMessage: mock().mockResolvedValue({}),
+      };
       start = mockStart;
     },
   };
@@ -25,6 +28,9 @@ describe("TelegramAdapter", () => {
   const mockFulfillFavor = {
     getPendingFavors: mock().mockResolvedValue([]),
     execute: mock().mockResolvedValue({ karmaAwarded: 10 }),
+    getFavorById: mock().mockResolvedValue({ description: "Test favor" }),
+    createValidation: mock().mockResolvedValue({}),
+    resolveValidation: mock().mockResolvedValue({ chatId: "123" }),
   } as any;
 
   test("should setup handlers and handle start command", async () => {
@@ -128,5 +134,42 @@ describe("TelegramAdapter", () => {
     await adapter.start();
 
     expect(mockStart).toHaveBeenCalled();
+  });
+
+  test("should handle claim favor callback", async () => {
+    const mockProcessUserMessage = {} as any;
+    const adapter = new TelegramAdapter("fake-token", mockProcessUserMessage, mockFulfillFavor);
+
+    const mockCtx = {
+      callbackQuery: { data: "fulfill_favor-1", message: { message_id: 100 } },
+      from: { id: 123, first_name: "TestUser" },
+      chat: { id: 123 },
+      answerCallbackQuery: mock().mockResolvedValue({}),
+      editMessageText: mock().mockResolvedValue({}),
+      replyWithPoll: mock().mockResolvedValue({ poll: { id: "poll-1" } }),
+    };
+
+    await mockMessageHandlers["callback_query:data"](mockCtx);
+
+    expect(mockFulfillFavor.getFavorById).toHaveBeenCalledWith("favor-1");
+    expect(mockCtx.replyWithPoll).toHaveBeenCalled();
+    expect(mockFulfillFavor.createValidation).toHaveBeenCalled();
+  });
+
+  test("should handle poll result", async () => {
+    const mockProcessUserMessage = {} as any;
+    const adapter = new TelegramAdapter("fake-token", mockProcessUserMessage, mockFulfillFavor);
+
+    const mockCtx = {
+      poll: { 
+        id: "poll-1", 
+        is_closed: true, 
+        options: [{ voter_count: 5 }, { voter_count: 0 }] 
+      },
+    };
+
+    await mockMessageHandlers["poll"](mockCtx);
+
+    expect(mockFulfillFavor.resolveValidation).toHaveBeenCalledWith("poll-1", true);
   });
 });

@@ -128,4 +128,61 @@ export class SupabaseAdapter implements DatabaseService {
       throw new Error(`Fallo sumando karma: ${karmaError.message}`);
     }
   }
+
+  async getFavorById(favorId: string): Promise<any | null> {
+    const { data, error } = await this.client
+      .from("favors")
+      .select("*")
+      .eq("id", favorId)
+      .single();
+
+    if (error) {
+      console.error("❌ Error al obtener favor por ID:", error.message);
+      return null;
+    }
+    return data;
+  }
+
+  async createValidation(pollId: string, favorId: string, userId: string, chatId: string): Promise<void> {
+    const { error } = await this.client
+      .from("favor_validations")
+      .insert({ poll_id: pollId, favor_id: favorId, user_id: userId, chat_id: chatId });
+
+    if (error) {
+      console.error("❌ Error al crear validación:", error.message);
+      throw new Error(`Fallo creando validación: ${error.message}`);
+    }
+  }
+
+  async getValidation(pollId: string): Promise<{ favorId: string; userId: string; chatId: string; } | null> {
+    const { data, error } = await this.client
+      .from("favor_validations")
+      .select("favor_id, user_id, chat_id")
+      .eq("poll_id", pollId)
+      .single();
+
+    if (error) {
+      if (error.code !== "PGRST116") {
+        console.error("❌ Error al obtener validación:", error.message);
+      }
+      return null;
+    }
+
+    return {
+      favorId: data.favor_id,
+      userId: data.user_id,
+      chatId: data.chat_id
+    };
+  }
+
+  async deleteValidation(pollId: string): Promise<void> {
+    const { error } = await this.client
+      .from("favor_validations")
+      .delete()
+      .eq("poll_id", pollId);
+
+    if (error) {
+      console.error("❌ Error al borrar validación:", error.message);
+    }
+  }
 }
