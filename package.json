@@ -1,15 +1,26 @@
 {
   "name": "favor-chain",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=22"
+  },
   "main": "src/index.ts",
   "scripts": {
     "start": "bun src/index.ts",
-    "dev": "bun --watch src/index.ts"
+    "dev": "bun --watch src/index.ts",
+    "test": "bun test"
   },
   "dependencies": {
+    "@elysiajs/cors": "^1.4.1",
+    "@supabase/supabase-js": "latest",
     "elysia": "latest",
     "grammy": "latest",
     "openai": "latest",
-    "@supabase/supabase-js": "latest"
+    "postgres": "^3.4.8"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.27",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.2"
   }
 }

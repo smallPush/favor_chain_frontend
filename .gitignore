@@ -1,5 +1,11 @@
+node_modules/
 .env
 output.log
 app.log
 bun.lock
-
+node_modules/
+client/node_modules/
+client/dist/
+backend.log
+frontend.log
+backend_new.log

@@ -2,6 +2,14 @@
 import OpenAI from "openai";
 import type { IAIService } from "../../domain/ports/IAIService";
 
+export interface AiLog {
+  id: string;
+  timestamp: string;
+  input: string;
+  output: string;
+  model: string;
+}
+
 export class OpenRouterAdapter implements IAIService {
   private openai: OpenAI;
 
@@ -16,9 +24,9 @@ export class OpenRouterAdapter implements IAIService {
     });
   }
 
-  async analyzeMessage(text: string): Promise<{ type: 'NECESIDAD' | 'BRAIN'; summary: string }> {
+  async analyzeMessage(text: string): Promise<{ type: 'NECESIDAD' | 'BRAIN'; summary: string; model: string }> {
     const response = await this.openai.chat.completions.create({
-      model: "google/gemini-1.5-flash",
+      model: "openrouter/free",
       messages: [
         {
           role: "system",
@@ -29,10 +37,14 @@ export class OpenRouterAdapter implements IAIService {
       response_format: { type: "json_object" }
     });
 
-    const content = JSON.parse(response.choices[0].message.content || "{}");
-    return {
+    const body = response.choices[0]?.message?.content || "{}";
+    const content = JSON.parse(body);
+    const result = {
       type: content.type || "BRAIN",
-      summary: content.summary || text.substring(0, 50)
+      summary: content.summary || text.substring(0, 50),
+      model: response.model || "google/gemini-1.5-flash"
     };
+
+    return result;
   }
 }
