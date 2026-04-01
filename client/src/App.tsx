@@ -28,6 +28,7 @@ function App() {
       // Fetch Ranking
       try {
         const topUsers = await getRanking();
+        console.log("📊 Datos de Ranking recibidos:", topUsers);
         setLeaderboard(topUsers);
       } catch (e) {
         console.error("❌ Error fetching ranking:", e);

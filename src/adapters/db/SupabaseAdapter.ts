@@ -10,28 +10,37 @@ export class SupabaseAdapter implements DatabaseService {
   }
 
   async getUserKarma(userId: string, chatId: string): Promise<number> {
-    const { data, error } = await this.client
+    const query = this.client
       .from("profiles")
       .select("karma")
-      .eq("user_id", userId)
-      .eq("chat_id", chatId)
-      .single();
+      .eq("user_id", userId);
+    
+    if (chatId !== "global") {
+      query.eq("chat_id", chatId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
-      if (error.code !== "PGRST116") { // PGRST116 es 'no encontrado'
-        console.error("❌ Error al obtener karma en Supabase:", error.message, error.details);
-      }
+      console.error("❌ Error al obtener karma en Supabase:", error.message);
       return 0;
     }
-    return data?.karma || 0;
+
+    // Sumar el karma de todos los perfiles encontrados (si es global)
+    return (data || []).reduce((sum, row) => sum + (row.karma || 0), 0);
   }
 
   async getUserFavors(userId: string, chatId: string): Promise<any[]> {
-    const { data, error } = await this.client
+    const query = this.client
       .from("favors")
       .select("id, user_id, chat_id, description, karma_awarded, entry_type, status, completed_by, created_at")
-      .eq("user_id", userId)
-      .eq("chat_id", chatId)
+      .eq("user_id", userId);
+    
+    if (chatId !== "global") {
+      query.eq("chat_id", chatId);
+    }
+
+    const { data, error } = await query
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -214,34 +223,43 @@ export class SupabaseAdapter implements DatabaseService {
   }
 
   async getGlobalLeaderboard(limit: number = 10): Promise<{ user_id: string; user_name?: string; karma: number; }[]> {
-    // Para el ranking global, sumamos el karma de todas las entradas por user_id
-    // Nota: Supabase asume que rpc es mejor para agregaciones complejas, 
-    // pero podemos intentar un select agrupado si la API lo permite o usar una vista.
-    // Dado que profiles tiene user_id + chat_id como PK, necesitamos sumar.
-    
-    // Como alternativa sencilla sin RPC: obtener todos y agrupar en JS (si no hay miles)
+    // 1. Obtener todos los perfiles que tengan algo de karma
     const { data, error } = await this.client
       .from("profiles")
-      .select("user_id, karma, user_name");
+      .select("user_id, karma, user_name")
+      .gt("karma", 0);
 
     if (error) {
-      console.error("❌ Error al obtener ranking global:", error.message);
+      console.error("❌ Error al obtener ranking global de Supabase:", error.message);
       return [];
     }
 
-    const grouped = (data || []).reduce((acc: any, curr: any) => {
-      if (!acc[curr.user_id]) {
-        acc[curr.user_id] = { user_id: curr.user_id, user_name: curr.user_name, karma: 0 };
+    if (!data || data.length === 0) {
+      console.log("⚠️ No se han encontrado perfiles con karma positivo.");
+      return [];
+    }
+
+    // 2. Agrupar por user_id y sumar
+    const grouped = data.reduce((acc: any, curr: any) => {
+      const uid = String(curr.user_id);
+      if (!acc[uid]) {
+        acc[uid] = { user_id: uid, user_name: curr.user_name, karma: 0 };
       }
-      acc[curr.user_id].karma += curr.karma;
-      // Priorizar el nombre más reciente si existe
-      if (curr.user_name) acc[curr.user_id].user_name = curr.user_name;
+      acc[uid].karma += Number(curr.karma);
+      // Priorizar el nickname si está disponible
+      if (curr.user_name && !acc[uid].user_name) {
+        acc[uid].user_name = curr.user_name;
+      }
       return acc;
     }, {});
 
-    return Object.values(grouped)
+    // 3. Ordenar y limitar
+    const result = Object.values(grouped)
       .sort((a: any, b: any) => b.karma - a.karma)
       .slice(0, limit) as any;
+
+    console.log(`📊 Ranking Global calculado con ${result.length} contribuidores.`);
+    return result;
   }
 
   async findUserIdByName(name: string): Promise<string | null> {
