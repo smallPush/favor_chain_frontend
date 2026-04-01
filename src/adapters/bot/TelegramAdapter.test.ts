@@ -32,6 +32,7 @@ describe("TelegramAdapter", () => {
     getFavorById: mock().mockResolvedValue({ description: "Test favor" }),
     createValidation: mock().mockResolvedValue({}),
     resolveValidation: mock().mockResolvedValue({ chatId: "123" }),
+    getLeaderboard: mock().mockResolvedValue([{ user_id: "123", karma: 100 }]),
   } as any;
 
   test("should setup handlers and handle start command", async () => {

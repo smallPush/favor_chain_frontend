@@ -24,4 +24,5 @@ export interface DatabaseService {
   createValidation(pollId: string, favorId: string, userId: string, chatId: string): Promise<void>;
   getValidation(pollId: string): Promise<{ favorId: string, userId: string, chatId: string } | null>;
   deleteValidation(pollId: string): Promise<void>;
+  getLeaderboard(chatId: string, limit?: number): Promise<{ user_id: string, karma: number }[]>;
 }

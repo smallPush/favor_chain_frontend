@@ -185,4 +185,20 @@ export class SupabaseAdapter implements DatabaseService {
       console.error("❌ Error al borrar validación:", error.message);
     }
   }
+
+  async getLeaderboard(chatId: string, limit: number = 10): Promise<{ user_id: string; karma: number; }[]> {
+    const { data, error } = await this.client
+      .from("profiles")
+      .select("user_id, karma")
+      .eq("chat_id", chatId)
+      .order("karma", { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error("❌ Error al obtener el ranking:", error.message);
+      return [];
+    }
+
+    return data || [];
+  }
 }

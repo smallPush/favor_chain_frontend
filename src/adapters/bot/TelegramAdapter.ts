@@ -43,6 +43,40 @@ export class TelegramAdapter {
       await this.listFavors(ctx);
     });
 
+    this.bot.command("ranking", async (ctx) => {
+      const chatId = ctx.chat.id.toString();
+      try {
+        const leaderboard = await this.fulfillFavor.getLeaderboard(chatId);
+        
+        if (leaderboard.length === 0) {
+          return ctx.reply("Aún no hay nadie en el ranking de este grupo. ¡Empieza a realizar favores!");
+        }
+
+        let message = "🏆 **Ranking de Karma - FavorChain** 🏆\n\n";
+        const medals = ["🥇", "🥈", "🥉"];
+
+        for (let i = 0; i < leaderboard.length; i++) {
+          const entry = leaderboard[i];
+          const rank = i < 3 ? medals[i] : `${i + 1}.`;
+          // Intentamos obtener el nombre del usuario si es posible, si no usamos su ID
+          let name = entry.user_id;
+          try {
+            const member = await ctx.getChatMember(parseInt(entry.user_id));
+            name = member.user.first_name;
+          } catch (e) {
+            // Ignorar si no podemos obtener el nombre
+          }
+          
+          message += `${rank} **${name}**: ${entry.karma} pts\n`;
+        }
+
+        await ctx.reply(message, { parse_mode: "Markdown" });
+      } catch (error) {
+        console.error("Error al obtener el ranking:", error);
+        await ctx.reply("Hubo un error al obtener el ranking.");
+      }
+    });
+
     // Manejar el clic en el botón "Yo lo hago"
     this.bot.on("callback_query:data", async (ctx) => {
       const data = ctx.callbackQuery.data;

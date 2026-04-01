@@ -39,4 +39,8 @@ export class FulfillFavor {
     await this.dbService.deleteValidation(pollId);
     return validation;
   }
+
+  async getLeaderboard(chatId: string) {
+    return await this.dbService.getLeaderboard(chatId);
+  }
 }
