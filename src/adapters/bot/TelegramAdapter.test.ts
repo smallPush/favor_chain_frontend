@@ -20,6 +20,7 @@ mock.module("grammy", () => {
         sendMessage: mock().mockResolvedValue({}),
       };
       start = mockStart;
+      me = { username: "FavorChainBot" };
     },
   };
 });
@@ -66,6 +67,7 @@ describe("TelegramAdapter", () => {
     const adapter = new TelegramAdapter("fake-token", mockProcessUserMessage, mockFulfillFavor);
 
     const mockCtx = {
+      me: { username: "FavorChainBot" },
       reply: mock().mockResolvedValue({}),
       react: mock().mockResolvedValue({}),
       from: { id: 123 },
@@ -79,6 +81,25 @@ describe("TelegramAdapter", () => {
     expect(mockCtx.react).toHaveBeenCalledWith("🤝");
   });
 
+  test("should handle bot mention and bypass AI", async () => {
+    const mockProcessUserMessage = { execute: mock() } as any;
+    const adapter = new TelegramAdapter("fake-token", mockProcessUserMessage, mockFulfillFavor);
+
+    const mockCtx = {
+      me: { username: "FavorChainBot" },
+      reply: mock().mockResolvedValue({}),
+      from: { id: 123 },
+      chat: { id: 123 },
+      message: { text: "Hey @FavorChainBot help me", entities: [{ type: "mention", offset: 4, length: 14 }] },
+    };
+
+    await mockMessageHandlers["message:text"](mockCtx);
+
+    expect(mockCtx.reply).toHaveBeenCalledWith(expect.stringContaining("¡Hola! Soy FavorChain"));
+    expect(mockFulfillFavor.getPendingFavors).toHaveBeenCalled();
+    expect(mockProcessUserMessage.execute).not.toHaveBeenCalled();
+  });
+
   test("should handle BRAIN text message", async () => {
     const mockProcessUserMessage = {
       execute: mock().mockResolvedValue({ type: "BRAIN", summary: "App idea", karmaAwarded: 0 }),
@@ -87,6 +108,7 @@ describe("TelegramAdapter", () => {
     const adapter = new TelegramAdapter("fake-token", mockProcessUserMessage, mockFulfillFavor);
 
     const mockCtx = {
+      me: { username: "FavorChainBot" },
       reply: mock().mockResolvedValue({}),
       react: mock().mockResolvedValue({}),
       from: { id: 123 },
@@ -108,6 +130,7 @@ describe("TelegramAdapter", () => {
     const adapter = new TelegramAdapter("fake-token", mockProcessUserMessage, mockFulfillFavor);
 
     const mockCtx = {
+      me: { username: "FavorChainBot" },
       reply: mock().mockResolvedValue({}),
       react: mock().mockResolvedValue({}),
       from: { id: 123 },

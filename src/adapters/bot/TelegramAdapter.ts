@@ -14,29 +14,33 @@ export class TelegramAdapter {
     this.setupHandlers();
   }
 
+  private async listFavors(ctx: any) {
+    try {
+      const favors = await this.fulfillFavor.getPendingFavors();
+      
+      if (favors.length === 0) {
+        return ctx.reply("No hay favores pendientes en este momento. ¡Sé el primero en pedir uno!");
+      }
+
+      await ctx.reply("🌟 **Favores Pendientes** 🌟\nAquí tienes lo que otros necesitan:");
+
+      for (const favor of favors) {
+        const keyboard = new InlineKeyboard()
+          .text("✅ ¡Yo lo hago!", `fulfill_${favor.id}`);
+        
+        await ctx.reply(`👉 ${favor.description}`, { reply_markup: keyboard });
+      }
+    } catch (error) {
+      console.error(error);
+      await ctx.reply("Error al obtener la lista de favores.");
+    }
+  }
+
   private setupHandlers() {
     this.bot.command("start", (ctx) => ctx.reply("¡Bienvenido a FavorChain! Cuéntame qué necesitas o qué quieres guardar en tu cerebro. Usa /favores para ver qué necesitan otros."));
 
     this.bot.command("favores", async (ctx) => {
-      try {
-        const favors = await this.fulfillFavor.getPendingFavors();
-        
-        if (favors.length === 0) {
-          return ctx.reply("No hay favores pendientes en este momento. ¡Sé el primero en pedir uno!");
-        }
-
-        await ctx.reply("🌟 **Favores Pendientes** 🌟\nAquí tienes lo que otros necesitan:");
-
-        for (const favor of favors) {
-          const keyboard = new InlineKeyboard()
-            .text("✅ ¡Yo lo hago!", `fulfill_${favor.id}`);
-          
-          await ctx.reply(`👉 ${favor.description}`, { reply_markup: keyboard });
-        }
-      } catch (error) {
-        console.error(error);
-        await ctx.reply("Error al obtener la lista de favores.");
-      }
+      await this.listFavors(ctx);
     });
 
     // Manejar el clic en el botón "Yo lo hago"
@@ -106,6 +110,21 @@ export class TelegramAdapter {
       const userId = ctx.from.id.toString();
       const chatId = ctx.chat.id.toString();
       const text = ctx.message.text;
+
+      // Si mencionan al bot explícitamente
+      const botMention = `@${ctx.me.username}`;
+      const isMentioned = text.includes(botMention) || ctx.message.entities?.some(e => e.type === "mention");
+
+      if (isMentioned) {
+        await ctx.reply("¡Hola! Soy FavorChain, tu asistente de favores y cerebro digital.\n\n" +
+          "• **Para pedir un favor:** Escribe lo que necesitas y la IA lo registrará.\n" +
+          "• **Para el Cerebro:** Cualquier otra cosa que digas se guardará en tu historial personal.\n" +
+          "• **Para ayudar:** Mira la lista de favores abajo y pulsa 'Yo lo hago'.\n\n" +
+          "No puedo darte más respuestas por ahora, pero aquí tienes los favores pendientes:");
+        
+        await this.listFavors(ctx);
+        return;
+      }
 
       try {
         const result = await this.processUserMessage.execute(userId, text, chatId);
