@@ -35,6 +35,7 @@ mock.module("@supabase/supabase-js", () => {
           }
           return mockQueryChain;
         }),
+        rpc: mock().mockResolvedValue({ data: null, error: null }),
       };
     }),
   };

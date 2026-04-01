@@ -63,3 +63,58 @@ ALTER TABLE public.favor_validations ENABLE ROW LEVEL SECURITY;
 -- Nota: Como estás accediendo desde un Backend con tu 'SUPABASE_KEY' (Service Role Key),
 -- el backend siempre tendrá permiso total e ignorará el RLS.
 -- Opcionalmente, puedes añadir políticas públicas si en el futuro decides que el frontend haga un select directo.
+
+-- 5. Funciones RPC para actualizaciones atómicas (Mitigación de Race Conditions)
+CREATE OR REPLACE FUNCTION save_favor_and_update_karma(
+  p_user_id TEXT,
+  p_chat_id TEXT,
+  p_description TEXT,
+  p_karma_awarded INTEGER,
+  p_entry_type TEXT,
+  p_original_input TEXT,
+  p_ai_model TEXT,
+  p_user_name TEXT
+)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  -- Upsert profile con el karma actualizado
+  INSERT INTO public.profiles (user_id, chat_id, karma, user_name)
+  VALUES (p_user_id, p_chat_id, p_karma_awarded, p_user_name)
+  ON CONFLICT (user_id, chat_id)
+  DO UPDATE SET
+    karma = public.profiles.karma + p_karma_awarded,
+    user_name = COALESCE(p_user_name, public.profiles.user_name);
+
+  -- Insert favor
+  INSERT INTO public.favors (user_id, chat_id, description, karma_awarded, entry_type, status, original_input, ai_model)
+  VALUES (p_user_id, p_chat_id, p_description, p_karma_awarded, p_entry_type, 'PENDING', p_original_input, p_ai_model);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION complete_favor_and_update_karma(
+  p_favor_id UUID,
+  p_completed_by TEXT,
+  p_karma_awarded INTEGER,
+  p_chat_id TEXT,
+  p_user_name TEXT
+)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  -- Marcar favor como completado
+  UPDATE public.favors
+  SET status = 'COMPLETED', completed_by = p_completed_by
+  WHERE id = p_favor_id;
+
+  -- Upsert karma para el donante
+  INSERT INTO public.profiles (user_id, chat_id, karma, user_name)
+  VALUES (p_completed_by, p_chat_id, p_karma_awarded, p_user_name)
+  ON CONFLICT (user_id, chat_id)
+  DO UPDATE SET
+    karma = public.profiles.karma + p_karma_awarded,
+    user_name = COALESCE(p_user_name, public.profiles.user_name);
+END;
+$$;
