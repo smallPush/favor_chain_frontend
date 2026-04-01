@@ -1,6 +1,6 @@
 import { useState, useEffect, SyntheticEvent } from 'react';
 import { getKarmaHistory, getAiLogs, getRanking, KarmaResponse, AiLog, RankingEntry } from './api';
-import { Search, Hash, Star, Clock, Trophy, Terminal, Cpu, Users, Award } from 'lucide-react';
+import { Search, Hash, Star, Clock, Trophy, Terminal, Cpu, Users } from 'lucide-react';
 import './App.css';
 
 function App() {
