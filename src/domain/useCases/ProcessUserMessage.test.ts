@@ -18,7 +18,7 @@ describe("ProcessUserMessage", () => {
     const result = await processUserMessage.execute("user-1", "I need help moving my couch", "chat-1");
 
     expect(mockAiService.analyzeMessage).toHaveBeenCalledWith("I need help moving my couch");
-    expect(mockDbService.saveFavor).toHaveBeenCalledWith("user-1", "Need help moving", 10, "NECESIDAD", "I need help moving my couch", undefined, "chat-1");
+    expect(mockDbService.saveFavor).toHaveBeenCalledWith("user-1", "Need help moving", 10, "NECESIDAD", "I need help moving my couch", undefined, "chat-1", undefined);
     expect(result).toEqual({
       type: "NECESIDAD",
       summary: "Need help moving",
@@ -40,7 +40,7 @@ describe("ProcessUserMessage", () => {
     const result = await processUserMessage.execute("user-2", "I have a great idea for an app", "chat-2");
 
     expect(mockAiService.analyzeMessage).toHaveBeenCalledWith("I have a great idea for an app");
-    expect(mockDbService.saveFavor).toHaveBeenCalledWith("user-2", "Idea for an app", 0, "BRAIN", "I have a great idea for an app", undefined, "chat-2");
+    expect(mockDbService.saveFavor).toHaveBeenCalledWith("user-2", "Idea for an app", 0, "BRAIN", "I have a great idea for an app", undefined, "chat-2", undefined);
     expect(result).toEqual({
       type: "BRAIN",
       summary: "Idea for an app",

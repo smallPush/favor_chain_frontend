@@ -78,7 +78,7 @@ describe("TelegramAdapter", () => {
 
     await mockMessageHandlers["message:text"](mockCtx);
 
-    expect(mockProcessUserMessage.execute).toHaveBeenCalledWith("123", "I need help", "123");
+    expect(mockProcessUserMessage.execute).toHaveBeenCalledWith("123", "I need help", "123", undefined);
     expect(mockCtx.react).toHaveBeenCalledWith("🤝");
   });
 
@@ -119,7 +119,7 @@ describe("TelegramAdapter", () => {
 
     await mockMessageHandlers["message:text"](mockCtx);
 
-    expect(mockProcessUserMessage.execute).toHaveBeenCalledWith("123", "App idea", "123");
+    expect(mockProcessUserMessage.execute).toHaveBeenCalledWith("123", "App idea", "123", undefined);
     expect(mockCtx.react).toHaveBeenCalledWith("👾");
   });
 
