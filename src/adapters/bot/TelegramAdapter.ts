@@ -71,7 +71,7 @@ export class TelegramAdapter {
         if (result.type === "NECESIDAD") {
           await ctx.reply(`Favor registrado: "${result.summary}". ¡Has ganado ${result.karmaAwarded} puntos de Karma! Otros usuarios lo verán en /favores.`);
         } else {
-          await ctx.reply(`Guardado en tu Second Brain: "${result.summary}".`);
+          await ctx.react("👾");
         }
       } catch (error) {
         console.error(error);

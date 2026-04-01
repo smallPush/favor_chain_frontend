@@ -15,6 +15,7 @@ mock.module("grammy", () => {
       on(event: string, handler: Function) {
         mockMessageHandlers[event] = handler;
       }
+      react = mock();
       start = mockStart;
     },
   };
@@ -80,6 +81,7 @@ describe("TelegramAdapter", () => {
 
     const mockCtx = {
       reply: mock().mockResolvedValue({}),
+      react: mock().mockResolvedValue({}),
       from: { id: 123 },
       chat: { id: 123 },
       message: { text: "App idea" },
@@ -88,7 +90,7 @@ describe("TelegramAdapter", () => {
     await mockMessageHandlers["message:text"](mockCtx);
 
     expect(mockProcessUserMessage.execute).toHaveBeenCalledWith("123", "App idea", "123");
-    expect(mockCtx.reply).toHaveBeenCalledWith('Guardado en tu Second Brain: "App idea".');
+    expect(mockCtx.react).toHaveBeenCalledWith("👾");
   });
 
   test("should handle error in text message", async () => {
