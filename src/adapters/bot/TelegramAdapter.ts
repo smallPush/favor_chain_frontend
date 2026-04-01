@@ -69,7 +69,7 @@ export class TelegramAdapter {
         const result = await this.processUserMessage.execute(userId, text, chatId);
         
         if (result.type === "NECESIDAD") {
-          await ctx.reply(`Favor registrado: "${result.summary}". ¡Has ganado ${result.karmaAwarded} puntos de Karma! Otros usuarios lo verán en /favores.`);
+          await ctx.react("🤝");
         } else {
           await ctx.react("👾");
         }

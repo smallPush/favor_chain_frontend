@@ -61,6 +61,7 @@ describe("TelegramAdapter", () => {
 
     const mockCtx = {
       reply: mock().mockResolvedValue({}),
+      react: mock().mockResolvedValue({}),
       from: { id: 123 },
       chat: { id: 123 },
       message: { text: "I need help" },
@@ -69,7 +70,7 @@ describe("TelegramAdapter", () => {
     await mockMessageHandlers["message:text"](mockCtx);
 
     expect(mockProcessUserMessage.execute).toHaveBeenCalledWith("123", "I need help", "123");
-    expect(mockCtx.reply).toHaveBeenCalledWith('Favor registrado: "Need help". ¡Has ganado 10 puntos de Karma! Otros usuarios lo verán en /favores.');
+    expect(mockCtx.react).toHaveBeenCalledWith("🤝");
   });
 
   test("should handle BRAIN text message", async () => {
@@ -102,6 +103,7 @@ describe("TelegramAdapter", () => {
 
     const mockCtx = {
       reply: mock().mockResolvedValue({}),
+      react: mock().mockResolvedValue({}),
       from: { id: 123 },
       chat: { id: 123 },
       message: { text: "App idea" },
