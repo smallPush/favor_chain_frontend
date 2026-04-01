@@ -1,6 +1,6 @@
 import { useState, useEffect, SyntheticEvent } from 'react';
-import { getKarmaHistory, getAiLogs, KarmaResponse, AiLog } from './api';
-import { Search, Hash, Star, Clock, Trophy, Terminal, Cpu } from 'lucide-react';
+import { getKarmaHistory, getAiLogs, getRanking, KarmaResponse, AiLog, RankingEntry } from './api';
+import { Search, Hash, Star, Clock, Trophy, Terminal, Cpu, Users, Award } from 'lucide-react';
 import './App.css';
 
 function App() {
@@ -9,15 +9,17 @@ function App() {
   const [data, setData] = useState<KarmaResponse | null>(null);
   const [error, setError] = useState('');
   
-  // State del Monitor de IA
+  // State del Monitor de IA y Ranking
   const [logs, setLogs] = useState<AiLog[]>([]);
+  const [leaderboard, setLeaderboard] = useState<RankingEntry[]>([]);
 
   useEffect(() => {
     // Polling cada 2 segundos para obtener los logs en tiempo real
     const fetchLogs = async () => {
       try {
-        const latestLogs = await getAiLogs();
+        const [latestLogs, topUsers] = await Promise.all([getAiLogs(), getRanking()]);
         setLogs(latestLogs);
+        setLeaderboard(topUsers);
       } catch (e) {
         // Ignorar errores de red para el monitor silencioso
       }
@@ -66,6 +68,46 @@ function App() {
               FavorChain Karma
             </h1>
             <p className="text-slate-400">Rastrea el historial de favores y puntos comunitarios</p>
+          </div>
+
+          {/* Global Leaderboard Section */}
+          <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 space-y-4">
+            <h2 className="text-sm font-bold flex items-center gap-2 text-emerald-400 tracking-widest uppercase">
+              <Users className="w-4 h-4" /> Top Contributors
+            </h2>
+            
+            <div className="grid grid-cols-1 gap-3">
+              {leaderboard.length === 0 ? (
+                <p className="text-xs text-slate-500">Cargando ranking...</p>
+              ) : (
+                leaderboard.slice(0, 5).map((entry, idx) => (
+                  <div key={entry.user_id} className="flex items-center justify-between p-3 bg-slate-900 border border-slate-800/50 rounded-2xl group hover:border-emerald-500/30 transition-all">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-xs font-bold">
+                        {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-200 group-hover:text-emerald-400 transition-colors">
+                          {entry.user_name || `User ${entry.user_id.substring(0, 4)}...`}
+                        </p>
+                        <p className="text-[10px] text-slate-500 font-mono tracking-tighter">ID: {entry.user_id}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="flex items-center gap-1 text-emerald-400 font-bold text-sm">
+                        {entry.karma} <Star className="w-3 h-3 fill-emerald-400" />
+                      </div>
+                      <div className="w-20 h-1 bg-slate-800 rounded-full mt-1 overflow-hidden">
+                        <div 
+                          className="h-full bg-emerald-500" 
+                          style={{ width: `${Math.min(100, (entry.karma / (leaderboard[0]?.karma || 1)) * 100)}%` }} 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
 
           {/* Search Box */}

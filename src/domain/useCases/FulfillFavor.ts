@@ -4,11 +4,11 @@ import type { DatabaseService } from "../ports/DatabaseService";
 export class FulfillFavor {
   constructor(private dbService: DatabaseService) {}
 
-  async execute(favorId: string, completedByUserId: string, chatId: string) {
+  async execute(favorId: string, completedByUserId: string, chatId: string, userName?: string) {
     // Por simplicidad, asignamos 20 de Karma al que hace el favor
     const karmaReward = 20;
     
-    await this.dbService.completeFavor(favorId, completedByUserId, karmaReward, chatId);
+    await this.dbService.completeFavor(favorId, completedByUserId, karmaReward, chatId, userName);
 
     return {
       success: true,
@@ -24,8 +24,8 @@ export class FulfillFavor {
     return await this.dbService.getFavorById(favorId);
   }
 
-  async createValidation(pollId: string, favorId: string, userId: string, chatId: string) {
-    await this.dbService.createValidation(pollId, favorId, userId, chatId);
+  async createValidation(pollId: string, favorId: string, userId: string, chatId: string, userName?: string) {
+    await this.dbService.createValidation(pollId, favorId, userId, chatId, userName);
   }
 
   async resolveValidation(pollId: string, isSuccessful: boolean) {
@@ -33,7 +33,7 @@ export class FulfillFavor {
     if (!validation) return null;
 
     if (isSuccessful) {
-      await this.execute(validation.favorId, validation.userId, validation.chatId);
+      await this.execute(validation.favorId, validation.userId, validation.chatId, validation.userName);
     }
 
     await this.dbService.deleteValidation(pollId);
@@ -42,5 +42,9 @@ export class FulfillFavor {
 
   async getLeaderboard(chatId: string) {
     return await this.dbService.getLeaderboard(chatId);
+  }
+
+  async getGlobalLeaderboard() {
+    return await this.dbService.getGlobalLeaderboard();
   }
 }

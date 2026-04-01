@@ -70,15 +70,20 @@ export class SupabaseAdapter implements DatabaseService {
     return data || [];
   }
 
-  async saveFavor(userId: string, description: string, karma: number, type: 'NECESIDAD' | 'BRAIN', originalInput?: string, aiModel?: string, chatId?: string): Promise<void> {
+  async saveFavor(userId: string, description: string, karma: number, type: 'NECESIDAD' | 'BRAIN', originalInput?: string, aiModel?: string, chatId?: string, userName?: string): Promise<void> {
     if (!chatId) return; // Karma must be associated with a chat
 
     const currentKarma = await this.getUserKarma(userId, chatId);
 
-    // Asegurar que el perfil existe (upsert) siempre
+    // Asegurar que el perfil existe (upsert) con el nombre de usuario si se proporciona
     const { error: profileError } = await this.client
       .from("profiles")
-      .upsert({ user_id: userId, chat_id: chatId, karma: currentKarma + karma });
+      .upsert({ 
+        user_id: userId, 
+        chat_id: chatId, 
+        karma: currentKarma + karma,
+        user_name: userName 
+      });
 
     if (profileError) {
       console.error("❌ Error al actualizar el perfil de usuario:", profileError.message);
@@ -105,7 +110,7 @@ export class SupabaseAdapter implements DatabaseService {
     }
   }
 
-  async completeFavor(favorId: string, completedByUserId: string, karmaAwarded: number, chatId: string): Promise<void> {
+  async completeFavor(favorId: string, completedByUserId: string, karmaAwarded: number, chatId: string, userName?: string): Promise<void> {
     // 1. Marcar el favor como completado
     const { error: updateError } = await this.client
       .from("favors")
@@ -121,7 +126,12 @@ export class SupabaseAdapter implements DatabaseService {
     const currentKarma = await this.getUserKarma(completedByUserId, chatId);
     const { error: karmaError } = await this.client
       .from("profiles")
-      .upsert({ user_id: completedByUserId, chat_id: chatId, karma: currentKarma + karmaAwarded });
+      .upsert({ 
+        user_id: completedByUserId, 
+        chat_id: chatId, 
+        karma: currentKarma + karmaAwarded,
+        user_name: userName // Guardar/actualizar el nombre si se proporciona
+      });
 
     if (karmaError) {
       console.error("❌ Error al sumar karma al donante:", karmaError.message);
@@ -143,10 +153,10 @@ export class SupabaseAdapter implements DatabaseService {
     return data;
   }
 
-  async createValidation(pollId: string, favorId: string, userId: string, chatId: string): Promise<void> {
+  async createValidation(pollId: string, favorId: string, userId: string, chatId: string, userName?: string): Promise<void> {
     const { error } = await this.client
       .from("favor_validations")
-      .insert({ poll_id: pollId, favor_id: favorId, user_id: userId, chat_id: chatId });
+      .insert({ poll_id: pollId, favor_id: favorId, user_id: userId, chat_id: chatId, user_name: userName });
 
     if (error) {
       console.error("❌ Error al crear validación:", error.message);
@@ -154,10 +164,10 @@ export class SupabaseAdapter implements DatabaseService {
     }
   }
 
-  async getValidation(pollId: string): Promise<{ favorId: string; userId: string; chatId: string; } | null> {
+  async getValidation(pollId: string): Promise<{ favorId: string; userId: string; chatId: string; userName?: string; } | null> {
     const { data, error } = await this.client
       .from("favor_validations")
-      .select("favor_id, user_id, chat_id")
+      .select("favor_id, user_id, chat_id, user_name")
       .eq("poll_id", pollId)
       .single();
 
@@ -171,7 +181,8 @@ export class SupabaseAdapter implements DatabaseService {
     return {
       favorId: data.favor_id,
       userId: data.user_id,
-      chatId: data.chat_id
+      chatId: data.chat_id,
+      userName: data.user_name
     };
   }
 
@@ -189,7 +200,7 @@ export class SupabaseAdapter implements DatabaseService {
   async getLeaderboard(chatId: string, limit: number = 10): Promise<{ user_id: string; karma: number; }[]> {
     const { data, error } = await this.client
       .from("profiles")
-      .select("user_id, karma")
+      .select("user_id, karma, user_name")
       .eq("chat_id", chatId)
       .order("karma", { ascending: false })
       .limit(limit);
@@ -200,5 +211,36 @@ export class SupabaseAdapter implements DatabaseService {
     }
 
     return data || [];
+  }
+
+  async getGlobalLeaderboard(limit: number = 10): Promise<{ user_id: string; user_name?: string; karma: number; }[]> {
+    // Para el ranking global, sumamos el karma de todas las entradas por user_id
+    // Nota: Supabase asume que rpc es mejor para agregaciones complejas, 
+    // pero podemos intentar un select agrupado si la API lo permite o usar una vista.
+    // Dado que profiles tiene user_id + chat_id como PK, necesitamos sumar.
+    
+    // Como alternativa sencilla sin RPC: obtener todos y agrupar en JS (si no hay miles)
+    const { data, error } = await this.client
+      .from("profiles")
+      .select("user_id, karma, user_name");
+
+    if (error) {
+      console.error("❌ Error al obtener ranking global:", error.message);
+      return [];
+    }
+
+    const grouped = (data || []).reduce((acc: any, curr: any) => {
+      if (!acc[curr.user_id]) {
+        acc[curr.user_id] = { user_id: curr.user_id, user_name: curr.user_name, karma: 0 };
+      }
+      acc[curr.user_id].karma += curr.karma;
+      // Priorizar el nombre más reciente si existe
+      if (curr.user_name) acc[curr.user_id].user_name = curr.user_name;
+      return acc;
+    }, {});
+
+    return Object.values(grouped)
+      .sort((a: any, b: any) => b.karma - a.karma)
+      .slice(0, limit) as any;
   }
 }

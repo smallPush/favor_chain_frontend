@@ -57,6 +57,9 @@ const app = new Elysia()
       model: f.ai_model || "google/gemini-1.5-flash"
     }));
   })
+  .get("/api/ranking", async () => {
+    return await fulfillFavor.getGlobalLeaderboard();
+  })
   .listen(3000, ({ hostname, port }) => {
     console.log(`API de FavorChain corriendo en http://${hostname}:${port}`);
   });

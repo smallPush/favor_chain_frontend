@@ -30,8 +30,20 @@ export interface AiLog {
   model: string;
 }
 
+export interface RankingEntry {
+  user_id: string;
+  user_name?: string;
+  karma: number;
+}
+
 export const getAiLogs = async (): Promise<AiLog[]> => {
   const response = await fetch(`${API_URL}/api/logs`);
+  if (!response.ok) return [];
+  return response.json();
+};
+
+export const getRanking = async (): Promise<RankingEntry[]> => {
+  const response = await fetch(`${API_URL}/api/ranking`);
   if (!response.ok) return [];
   return response.json();
 };

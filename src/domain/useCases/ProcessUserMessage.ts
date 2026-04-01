@@ -8,7 +8,7 @@ export class ProcessUserMessage {
     private dbService: DatabaseService
   ) {}
 
-  async execute(userId: string, text: string, chatId?: string) {
+  async execute(userId: string, text: string, chatId?: string, userName?: string) {
     const analysis = await this.aiService.analyzeMessage(text);
     
     let karmaAwarded = 0;
@@ -17,7 +17,7 @@ export class ProcessUserMessage {
     }
 
     // Siempre guardar en base de datos, independientemente del tipo
-    await this.dbService.saveFavor(userId, analysis.summary, karmaAwarded, analysis.type, text, analysis.model, chatId);
+    await this.dbService.saveFavor(userId, analysis.summary, karmaAwarded, analysis.type, text, analysis.model, chatId, userName);
 
     return {
       type: analysis.type,

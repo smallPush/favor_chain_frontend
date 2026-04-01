@@ -18,11 +18,12 @@ export interface DatabaseService {
   getUserFavors(userId: string, chatId: string): Promise<Favor[]>;
   getPendingFavors(): Promise<Favor[]>;
   getRecentLogs(limit?: number): Promise<Favor[]>;
-  saveFavor(userId: string, description: string, karma: number, type: 'NECESIDAD' | 'BRAIN', originalInput?: string, aiModel?: string, chatId?: string): Promise<void>;
-  completeFavor(favorId: string, completedByUserId: string, karmaAwarded: number, chatId: string): Promise<void>;
+  saveFavor(userId: string, description: string, karma: number, type: 'NECESIDAD' | 'BRAIN', originalInput?: string, aiModel?: string, chatId?: string, userName?: string): Promise<void>;
+  completeFavor(favorId: string, completedByUserId: string, karmaAwarded: number, chatId: string, userName?: string): Promise<void>;
   getFavorById(favorId: string): Promise<Favor | null>;
-  createValidation(pollId: string, favorId: string, userId: string, chatId: string): Promise<void>;
-  getValidation(pollId: string): Promise<{ favorId: string, userId: string, chatId: string } | null>;
+  createValidation(pollId: string, favorId: string, userId: string, chatId: string, userName?: string): Promise<void>;
+  getValidation(pollId: string): Promise<{ favorId: string, userId: string, chatId: string, userName?: string } | null>;
   deleteValidation(pollId: string): Promise<void>;
-  getLeaderboard(chatId: string, limit?: number): Promise<{ user_id: string, karma: number }[]>;
+  getLeaderboard(chatId: string, limit?: number): Promise<{ user_id: string, user_name?: string, karma: number }[]>;
+  getGlobalLeaderboard(limit?: number): Promise<{ user_id: string, user_name?: string, karma: number }[]>;
 }

@@ -58,13 +58,16 @@ export class TelegramAdapter {
         for (let i = 0; i < leaderboard.length; i++) {
           const entry = leaderboard[i];
           const rank = i < 3 ? medals[i] : `${i + 1}.`;
-          // Intentamos obtener el nombre del usuario si es posible, si no usamos su ID
-          let name = entry.user_id;
-          try {
-            const member = await ctx.getChatMember(parseInt(entry.user_id));
-            name = member.user.first_name;
-          } catch (e) {
-            // Ignorar si no podemos obtener el nombre
+          // Usamos el nombre guardado en DB si existe, si no intentamos obtenerlo o usamos ID
+          let name = entry.user_name || entry.user_id;
+          
+          if (!entry.user_name) {
+            try {
+              const member = await ctx.getChatMember(parseInt(entry.user_id));
+              name = member.user.first_name;
+            } catch (e) {
+              // Mantener ID como fallback
+            }
           }
           
           message += `${rank} **${name}**: ${entry.karma} pts\n`;
@@ -104,7 +107,7 @@ export class TelegramAdapter {
             }
           );
 
-          await this.fulfillFavor.createValidation(poll.poll.id, favorId, userId, chatId);
+          await this.fulfillFavor.createValidation(poll.poll.id, favorId, userId, chatId, userName);
           
           await ctx.answerCallbackQuery("¡Encuesta de validación iniciada!");
           await ctx.editMessageText(`⏳ **Validación en curso**\nEsperando votos para confirmar que "${favor.description}" ha sido completado.`);
@@ -142,6 +145,7 @@ export class TelegramAdapter {
 
     this.bot.on("message:text", async (ctx) => {
       const userId = ctx.from.id.toString();
+      const userName = ctx.from.first_name;
       const chatId = ctx.chat.id.toString();
       const text = ctx.message.text;
 
@@ -161,7 +165,7 @@ export class TelegramAdapter {
       }
 
       try {
-        const result = await this.processUserMessage.execute(userId, text, chatId);
+        const result = await this.processUserMessage.execute(userId, text, chatId, userName);
         
         if (result.type === "NECESIDAD") {
           await ctx.react("🤝");
