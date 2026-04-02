@@ -38,7 +38,13 @@ export class OpenRouterAdapter implements IAIService {
     });
 
     const body = response.choices[0]?.message?.content || "{}";
-    const content = JSON.parse(body);
+    let content: any = {};
+    try {
+      content = JSON.parse(body);
+    } catch (e) {
+      console.warn("Failed to parse AI response body:", e);
+      content = {};
+    }
     const result = {
       type: content.type || "BRAIN",
       summary: content.summary || text.substring(0, 50),
