@@ -30,14 +30,14 @@ export class OpenRouterAdapter implements IAIService {
       messages: [
         {
           role: "system",
-          content: "Analiza el mensaje y determina si es una 'NECESIDAD' (un favor que alguien pide) o 'BRAIN' (información para el segundo cerebro). Responde en JSON: { \"type\": \"NECESIDAD\" | \"BRAIN\", \"summary\": \"resumen corto\" }"
+          content: "Analiza el mensaje y determina si es una 'NECESIDAD' (un favor que alguien pide) o 'BRAIN' (información para el segundo cerebro). Responde estrictamente con un objeto JSON sin markdown: { \"type\": \"NECESIDAD\" | \"BRAIN\", \"summary\": \"resumen corto\" }"
         },
         { role: "user", content: text }
-      ],
-      response_format: { type: "json_object" }
+      ]
     });
 
-    const body = response.choices[0]?.message?.content || "{}";
+    let body = response.choices[0]?.message?.content || "{}";
+    body = body.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
     let content: any = {};
     try {
       content = JSON.parse(body);
