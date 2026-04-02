@@ -1,21 +1,20 @@
-import { describe, expect, test, mock } from "bun:test";
+import { describe, expect, test, mock, afterEach, spyOn } from "bun:test";
 import { SupabaseAdapter } from "./SupabaseAdapter";
+
+let mockSupabaseResponse: { data: any; error: any } = { data: [{ karma: 50 }], error: null };
 
 mock.module("@supabase/supabase-js", () => {
   return {
     createClient: mock(() => {
-      // Mock result as an array of objects (to support aggregation)
-      const mockResult = { data: [{ karma: 50 }], error: null };
-      
       const mockQueryChain: any = {
         eq: mock(() => mockQueryChain),
         select: mock(() => mockQueryChain),
         order: mock(() => mockQueryChain),
-        single: mock().mockResolvedValue({ data: { karma: 50 }, error: null }),
+        single: mock().mockImplementation(() => Promise.resolve(mockSupabaseResponse)),
         gt: mock(() => mockQueryChain),
         limit: mock(() => mockQueryChain),
         // Make the mock awaitable (thenable) to handle "await query"
-        then: (resolve: any) => resolve(mockResult)
+        then: (resolve: any, reject: any) => Promise.resolve(mockSupabaseResponse).then(resolve, reject)
       };
 
       return {
@@ -41,11 +40,31 @@ mock.module("@supabase/supabase-js", () => {
 });
 
 describe("SupabaseAdapter", () => {
+  afterEach(() => {
+    // Reset the mock response after each test
+    mockSupabaseResponse = { data: [{ karma: 50 }], error: null };
+  });
+
   test("should get user karma", async () => {
     const adapter = new SupabaseAdapter("fake-url", "fake-key");
     const karma = await adapter.getUserKarma("user-1", "chat-1");
 
     expect(karma).toBe(50);
+  });
+
+  test("should return 0 when getUserKarma encounters a database error", async () => {
+    const adapter = new SupabaseAdapter("fake-url", "fake-key");
+    const consoleErrorSpy = spyOn(console, "error").mockImplementation(() => {});
+
+    // Simulate database error
+    mockSupabaseResponse = { data: null, error: { message: "Simulated DB Error" } };
+
+    const karma = await adapter.getUserKarma("error-user-1", "chat-1");
+
+    expect(karma).toBe(0);
+    expect(consoleErrorSpy).toHaveBeenCalledWith("❌ Error al obtener karma en Supabase:", "Simulated DB Error");
+
+    consoleErrorSpy.mockRestore();
   });
 
   test("should save favor and update karma", async () => {
