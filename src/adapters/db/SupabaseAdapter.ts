@@ -82,69 +82,35 @@ export class SupabaseAdapter implements DatabaseService {
   async saveFavor(userId: string, description: string, karma: number, type: 'NECESIDAD' | 'BRAIN', originalInput?: string, aiModel?: string, chatId?: string, userName?: string): Promise<void> {
     if (!chatId) return; // Karma must be associated with a chat
 
-    const currentKarma = await this.getUserKarma(userId, chatId);
+    const { error } = await this.client.rpc("save_favor_and_update_karma", {
+      p_user_id: userId,
+      p_chat_id: chatId,
+      p_description: description,
+      p_karma_awarded: karma,
+      p_entry_type: type,
+      p_original_input: originalInput || null,
+      p_ai_model: aiModel || null,
+      p_user_name: userName || null
+    });
 
-    // Asegurar que el perfil existe (upsert) con el nombre de usuario si se proporciona
-    const { error: profileError } = await this.client
-      .from("profiles")
-      .upsert({ 
-        user_id: userId, 
-        chat_id: chatId, 
-        karma: currentKarma + karma,
-        user_name: userName 
-      });
-
-    if (profileError) {
-      console.error("❌ Error al actualizar el perfil de usuario:", profileError.message);
-      throw new Error(`Fallo persistiendo perfil: ${profileError.message}`);
-    }
-
-    // Guardar la entrada con su tipo (NECESIDAD o BRAIN)
-    const { error: favorError } = await this.client
-      .from("favors")
-      .insert({ 
-        user_id: userId, 
-        chat_id: chatId,
-        description, 
-        karma_awarded: karma, 
-        entry_type: type, 
-        status: 'PENDING',
-        original_input: originalInput,
-        ai_model: aiModel
-      });
-
-    if (favorError) {
-      console.error("❌ Error al insertar el favor:", favorError.message);
-      throw new Error(`Fallo insertando favor: ${favorError.message}`);
+    if (error) {
+      console.error("❌ Error al guardar favor y actualizar karma:", error.message);
+      throw new Error(`Fallo guardando favor: ${error.message}`);
     }
   }
 
   async completeFavor(favorId: string, completedByUserId: string, karmaAwarded: number, chatId: string, userName?: string): Promise<void> {
-    // 1. Marcar el favor como completado
-    const { error: updateError } = await this.client
-      .from("favors")
-      .update({ status: 'COMPLETED', completed_by: completedByUserId })
-      .eq("id", favorId);
+    const { error } = await this.client.rpc("complete_favor_and_update_karma", {
+      p_favor_id: favorId,
+      p_completed_by: completedByUserId,
+      p_karma_awarded: karmaAwarded,
+      p_chat_id: chatId,
+      p_user_name: userName || null
+    });
 
-    if (updateError) {
-      console.error("❌ Error al completar el favor en BD:", updateError.message);
-      throw new Error(`Fallo completando favor: ${updateError.message}`);
-    }
-
-    // 2. Darle el karma al usuario que lo ha hecho
-    const currentKarma = await this.getUserKarma(completedByUserId, chatId);
-    const { error: karmaError } = await this.client
-      .from("profiles")
-      .upsert({ 
-        user_id: completedByUserId, 
-        chat_id: chatId, 
-        karma: currentKarma + karmaAwarded,
-        user_name: userName // Guardar/actualizar el nombre si se proporciona
-      });
-
-    if (karmaError) {
-      console.error("❌ Error al sumar karma al donante:", karmaError.message);
-      throw new Error(`Fallo sumando karma: ${karmaError.message}`);
+    if (error) {
+      console.error("❌ Error al completar favor y actualizar karma:", error.message);
+      throw new Error(`Fallo completando favor: ${error.message}`);
     }
   }
 
