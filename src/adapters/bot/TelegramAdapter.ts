@@ -44,7 +44,7 @@ export class TelegramAdapter {
     });
 
     this.bot.command("ranking", async (ctx) => {
-      const chatId = ctx.chat.id.toString();
+      const chatId = ctx.chat?.id.toString() || "global";
       try {
         const leaderboard = await this.fulfillFavor.getLeaderboard(chatId);
         
@@ -146,7 +146,7 @@ export class TelegramAdapter {
     this.bot.on("message:text", async (ctx) => {
       const userId = ctx.from.id.toString();
       const userName = ctx.from.first_name;
-      const chatId = ctx.chat.id.toString();
+      const chatId = ctx.chat?.id?.toString() || "global";
       const text = ctx.message.text;
 
       // Si mencionan al bot explícitamente
