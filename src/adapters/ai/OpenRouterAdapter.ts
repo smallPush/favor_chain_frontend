@@ -30,14 +30,26 @@ export class OpenRouterAdapter implements IAIService {
       messages: [
         {
           role: "system",
-          content: "Analiza el mensaje y determina si es una 'NECESIDAD' (un favor que alguien pide) o 'BRAIN' (información para el segundo cerebro). Responde en JSON: { \"type\": \"NECESIDAD\" | \"BRAIN\", \"summary\": \"resumen corto\" }"
+          content: "Analiza el mensaje y determina si es una 'NECESIDAD' (un favor que alguien pide) o 'BRAIN' (información para el segundo cerebro). Responde SOLO en JSON puro sin formato markdown: { \"type\": \"NECESIDAD\" | \"BRAIN\", \"summary\": \"resumen corto\" }"
         },
         { role: "user", content: text }
-      ],
-      response_format: { type: "json_object" }
+      ]
     });
 
-    const body = response.choices[0]?.message?.content || "{}";
+    let body = response.choices[0]?.message?.content || "{}";
+
+    // Strip markdown backticks if the model ignores the instruction
+    body = body.trim();
+    if (body.startsWith("```json")) {
+      body = body.substring(7);
+    } else if (body.startsWith("```")) {
+      body = body.substring(3);
+    }
+    if (body.endsWith("```")) {
+      body = body.substring(0, body.length - 3);
+    }
+    body = body.trim();
+
     let content: any = {};
     try {
       content = JSON.parse(body);
@@ -45,8 +57,17 @@ export class OpenRouterAdapter implements IAIService {
       console.warn("Failed to parse AI response body:", e);
       content = {};
     }
+
+    let parsedType = "BRAIN";
+    if (content.type && typeof content.type === "string") {
+      const upperType = content.type.trim().toUpperCase();
+      if (upperType === "NECESIDAD" || upperType === "BRAIN") {
+        parsedType = upperType;
+      }
+    }
+
     const result = {
-      type: content.type || "BRAIN",
+      type: parsedType as "NECESIDAD" | "BRAIN",
       summary: content.summary || text.substring(0, 50),
       model: response.model || "google/gemini-1.5-flash"
     };
