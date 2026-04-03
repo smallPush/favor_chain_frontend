@@ -167,14 +167,22 @@ export class TelegramAdapter {
       try {
         const result = await this.processUserMessage.execute(userId, text, chatId, userName);
         
-        if (result.type === "NECESIDAD") {
-          await ctx.react("🤝");
-        } else {
-          await ctx.react("👾");
+        try {
+          if (result.type === "NECESIDAD") {
+            await ctx.react("🤝");
+          } else {
+            await ctx.react("👾");
+          }
+        } catch (e) {
+          // Ignore react errors if emojis are not allowed
         }
       } catch (error) {
         console.error(error);
-        await ctx.reply("Lo siento, hubo un error procesando tu mensaje.");
+        try {
+          await ctx.react("❌");
+        } catch (e) {
+          // Silently ignore if emojis are disabled
+        }
       }
     });
   }

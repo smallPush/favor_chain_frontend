@@ -45,8 +45,13 @@ export class OpenRouterAdapter implements IAIService {
       console.warn("Failed to parse AI response body:", e);
       content = {};
     }
+    let parsedType = content.type ? String(content.type).toUpperCase().trim() : "BRAIN";
+    if (parsedType !== "NECESIDAD" && parsedType !== "BRAIN") {
+      parsedType = "BRAIN";
+    }
+
     const result = {
-      type: content.type || "BRAIN",
+      type: parsedType as 'NECESIDAD' | 'BRAIN',
       summary: content.summary || text.substring(0, 50),
       model: response.model || "google/gemini-1.5-flash"
     };
