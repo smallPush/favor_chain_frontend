@@ -109,4 +109,46 @@ describe("OpenRouterAdapter", () => {
       model: "google/gemini-1.5-flash",
     });
   });
+
+  test("should fallback to defaults if valid JSON misses required fields", async () => {
+    mockCreate.mockResolvedValueOnce({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              random_field: "value",
+            }),
+          },
+        },
+      ],
+    });
+    const adapter = new OpenRouterAdapter("fake-api-key");
+    const result = await adapter.analyzeMessage("A very long string that should be truncated when it gets to fifty characters length.");
+
+    expect(result).toEqual({
+      type: "BRAIN",
+      summary: "A very long string that should be truncated when i",
+      model: "google/gemini-1.5-flash",
+    });
+  });
+
+  test("should fallback to defaults if JSON parsing returns null", async () => {
+    mockCreate.mockResolvedValueOnce({
+      choices: [
+        {
+          message: {
+            content: "null",
+          },
+        },
+      ],
+    });
+    const adapter = new OpenRouterAdapter("fake-api-key");
+    const result = await adapter.analyzeMessage("Test message.");
+
+    expect(result).toEqual({
+      type: "BRAIN",
+      summary: "Test message.",
+      model: "google/gemini-1.5-flash",
+    });
+  });
 });

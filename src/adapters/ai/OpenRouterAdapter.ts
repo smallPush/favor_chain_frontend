@@ -41,6 +41,9 @@ export class OpenRouterAdapter implements IAIService {
     let content: any = {};
     try {
       content = JSON.parse(body);
+      if (!content || typeof content !== 'object') {
+        content = {};
+      }
     } catch (e) {
       console.warn("Failed to parse AI response body:", e);
       content = {};
