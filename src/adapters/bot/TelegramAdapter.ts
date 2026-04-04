@@ -177,7 +177,7 @@ export class TelegramAdapter {
           // Ignore react errors if the bot lacks permissions
         }
       } catch (error) {
-        console.error(error);
+        console.error("Error procesando mensaje de usuario:", error);
         await ctx.reply("Lo siento, hubo un error procesando tu mensaje.");
       }
     });
