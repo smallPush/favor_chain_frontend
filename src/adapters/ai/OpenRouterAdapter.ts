@@ -33,14 +33,16 @@ export class OpenRouterAdapter implements IAIService {
           content: "Analiza el mensaje y determina si es una 'NECESIDAD' (un favor que alguien pide) o 'BRAIN' (información para el segundo cerebro). Responde en JSON: { \"type\": \"NECESIDAD\" | \"BRAIN\", \"summary\": \"resumen corto\" }"
         },
         { role: "user", content: text }
-      ],
-      response_format: { type: "json_object" }
+      ]
     });
 
-    const body = response.choices[0]?.message?.content || "{}";
+    let body = response.choices[0]?.message?.content || "{}";
+    body = body.replace(/```json/gi, "").replace(/```/g, "").trim();
+
     let content: any = {};
     try {
-      content = JSON.parse(body);
+      const parsed = JSON.parse(body);
+      content = (typeof parsed === "object" && parsed !== null) ? parsed : {};
     } catch (e) {
       console.warn("Failed to parse AI response body:", e);
       content = {};

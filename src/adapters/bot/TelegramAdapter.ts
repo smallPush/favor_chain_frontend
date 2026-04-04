@@ -167,10 +167,14 @@ export class TelegramAdapter {
       try {
         const result = await this.processUserMessage.execute(userId, text, chatId, userName);
         
-        if (result.type === "NECESIDAD") {
-          await ctx.react("🤝");
-        } else {
-          await ctx.react("👾");
+        try {
+          if (result.type === "NECESIDAD") {
+            await ctx.react("🤝");
+          } else {
+            await ctx.react("👾");
+          }
+        } catch (e) {
+          // Ignore react errors if the bot lacks permissions
         }
       } catch (error) {
         console.error(error);
