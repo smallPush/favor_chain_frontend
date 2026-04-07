@@ -22,9 +22,10 @@ export interface DatabaseService {
   completeFavor(favorId: string, completedByUserId: string, karmaAwarded: number, chatId: string, userName?: string): Promise<void>;
   getFavorById(favorId: string): Promise<Favor | null>;
   createValidation(pollId: string, favorId: string, userId: string, chatId: string, userName?: string): Promise<void>;
-  getValidation(pollId: string): Promise<{ favorId: string, userId: string, chatId: string, userName?: string } | null>;
+  getValidation(pollId: string): Promise<{ favorId: string, userId: string, chatId: string, userName?: string, yesVotes?: number, noVotes?: number } | null>;
   deleteValidation(pollId: string): Promise<void>;
   getLeaderboard(chatId: string, limit?: number): Promise<{ user_id: string, user_name?: string, karma: number }[]>;
   getGlobalLeaderboard(limit?: number): Promise<{ user_id: string, user_name?: string, karma: number }[]>;
   findUserIdByName(name: string): Promise<string | null>;
+  incrementValidationVotes(pollId: string, isYes: boolean): Promise<{ yesVotes: number, noVotes: number } | null>;
 }

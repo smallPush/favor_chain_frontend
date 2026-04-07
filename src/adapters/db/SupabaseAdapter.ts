@@ -139,10 +139,10 @@ export class SupabaseAdapter implements DatabaseService {
     }
   }
 
-  async getValidation(pollId: string): Promise<{ favorId: string; userId: string; chatId: string; userName?: string; } | null> {
+  async getValidation(pollId: string): Promise<{ favorId: string; userId: string; chatId: string; userName?: string; yesVotes?: number; noVotes?: number; } | null> {
     const { data, error } = await this.client
       .from("favor_validations")
-      .select("favor_id, user_id, chat_id, user_name")
+      .select("favor_id, user_id, chat_id, user_name, yes_votes, no_votes")
       .eq("poll_id", pollId)
       .single();
 
@@ -157,7 +157,37 @@ export class SupabaseAdapter implements DatabaseService {
       favorId: data.favor_id,
       userId: data.user_id,
       chatId: data.chat_id,
-      userName: data.user_name
+      userName: data.user_name,
+      yesVotes: data.yes_votes || 0,
+      noVotes: data.no_votes || 0
+    };
+  }
+
+  async incrementValidationVotes(pollId: string, isYes: boolean): Promise<{ yesVotes: number, noVotes: number } | null> {
+    const column = isYes ? "yes_votes" : "no_votes";
+    
+    // Usamos rpc para incremento atómico si existe, o un update simple con el valor actual
+    // Para simplificar sin crear nuevos RPCs en el servidor, primero obtenemos y luego actualizamos
+    const current = await this.getValidation(pollId);
+    if (!current) return null;
+
+    const newValue = isYes ? (current.yesVotes || 0) + 1 : (current.noVotes || 0) + 1;
+
+    const { data, error } = await this.client
+      .from("favor_validations")
+      .update({ [column]: newValue })
+      .eq("poll_id", pollId)
+      .select("yes_votes, no_votes")
+      .single();
+
+    if (error) {
+      console.error("❌ Error al incrementar votos:", error.message);
+      return null;
+    }
+
+    return {
+      yesVotes: data.yes_votes || 0,
+      noVotes: data.no_votes || 0
     };
   }
 

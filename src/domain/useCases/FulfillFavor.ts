@@ -24,6 +24,14 @@ export class FulfillFavor {
     return await this.dbService.getFavorById(favorId);
   }
 
+  async getValidation(pollId: string) {
+    return await this.dbService.getValidation(pollId);
+  }
+
+  async incrementValidationVotes(pollId: string, isYes: boolean) {
+    return await this.dbService.incrementValidationVotes(pollId, isYes);
+  }
+
   async createValidation(pollId: string, favorId: string, userId: string, chatId: string, userName?: string) {
     await this.dbService.createValidation(pollId, favorId, userId, chatId, userName);
   }

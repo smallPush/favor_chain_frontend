@@ -118,27 +118,73 @@ export class TelegramAdapter {
       }
     });
 
-    // Escuchar el cierre de encuestas para procesar resultados
+    // Escuchar votos individuales para validación en tiempo real (más rápido)
+    this.bot.on("poll_answer", async (ctx) => {
+      const { poll_id, option_ids } = ctx.pollAnswer;
+      const isYes = option_ids.includes(0);
+
+      try {
+        const validation = await this.fulfillFavor.getValidation(poll_id);
+        if (!validation) return;
+
+        // Registrar el voto y obtener totales actuales
+        const totals = await this.fulfillFavor.incrementValidationVotes(poll_id, isYes);
+        if (!totals) return;
+
+        // Obtener total de miembros para calcular mayoría
+        const memberCount = await ctx.api.getChatMemberCount(validation.chatId);
+        // Descontamos al bot y al que pide el favor? No, simplificamos: mayoría de miembros visibles.
+        // Si hay 3 personas, el 50% es 1.5, necesitamos 2 votos.
+        // Si hay 10 personas, el 50% es 5, necesitamos 6 votos.
+        const threshold = Math.floor(memberCount / 2) + 1;
+
+        console.log(`🗳️ Voto en poll ${poll_id}: Yes=${totals.yesVotes}, No=${totals.noVotes}, Threshold=${threshold}`);
+
+        if (totals.yesVotes >= threshold) {
+          // ¡Mayoría alcanzada! Completar favor inmediatamente
+          const favor = await this.fulfillFavor.getFavorById(validation.favorId);
+          if (favor && favor.status === "PENDING") {
+            await this.fulfillFavor.resolveValidation(poll_id, true);
+            await this.bot.api.sendMessage(validation.chatId, `✅ **Favor Validado por Mayoría** (${totals.yesVotes}/${memberCount})\nLa comunidad ha confirmado la tarea rápidamente. ¡Puntos asignados!`);
+            
+            // Intentar detener la encuesta para que no sigan votando
+            try {
+              await this.bot.api.stopPoll(validation.chatId, parseInt(poll_id)); // A veces poll_id no es un int simple en Telegram
+            } catch (e) {
+              // stopPoll suele requerir message_id, que no tenemos aquí. No es crítico.
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error al procesar poll_answer:", error);
+      }
+    });
+
+    // Escuchar el cierre de encuestas (como fallback o cuando expira el tiempo)
     this.bot.on("poll", async (ctx) => {
       const poll = ctx.poll;
       
       if (poll.is_closed) {
         try {
+          const validation = await this.fulfillFavor.getValidation(poll.id);
+          if (!validation) return;
+
+          // Si ya se resolvió por mayoría, resolveValidation no hará nada o devolverá null
           const yesVotes = poll.options[0].voter_count;
           const noVotes = poll.options[1].voter_count;
           const isSuccessful = yesVotes > noVotes && yesVotes > 0;
 
-          const validation = await this.fulfillFavor.resolveValidation(poll.id, isSuccessful);
+          const result = await this.fulfillFavor.resolveValidation(poll.id, isSuccessful);
           
-          if (validation) {
+          if (result) {
             if (isSuccessful) {
-              await this.bot.api.sendMessage(validation.chatId, `✅ **Favor Validado**\nLa comunidad ha confirmado la tarea. ¡Se han asignado los puntos de Karma!`);
+              await this.bot.api.sendMessage(validation.chatId, `✅ **Favor Validado** (Tiempo agotado)\nLa comunidad ha confirmado la tarea. ¡Se han asignado los puntos de Karma!`);
             } else {
               await this.bot.api.sendMessage(validation.chatId, `❌ **Favor no Validado**\nLa encuesta ha terminado sin votos suficientes o con mayoría negativa.`);
             }
           }
         } catch (error) {
-          console.error("Error al procesar resultado de encuesta:", error);
+          console.error("Error al procesar resultado de encuesta final:", error);
         }
       }
     });

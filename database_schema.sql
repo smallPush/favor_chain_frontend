@@ -5,6 +5,7 @@
 CREATE TABLE IF NOT EXISTS public.profiles (
   user_id TEXT NOT NULL,
   chat_id TEXT NOT NULL,
+  user_name TEXT,
   karma INTEGER DEFAULT 0 NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   PRIMARY KEY (user_id, chat_id)
@@ -54,6 +55,7 @@ CREATE TABLE IF NOT EXISTS public.favor_validations (
   favor_id UUID NOT NULL,
   user_id TEXT NOT NULL,
   chat_id TEXT NOT NULL,
+  user_name TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   FOREIGN KEY (favor_id) REFERENCES public.favors(id) ON DELETE CASCADE
 );
