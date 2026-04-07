@@ -1,4 +1,4 @@
-import { describe, expect, test, mock } from "bun:test";
+import { describe, expect, test, mock, beforeEach } from "bun:test";
 import { OpenRouterAdapter } from "./OpenRouterAdapter";
 import OpenAI from "openai";
 
@@ -29,8 +29,21 @@ mock.module("openai", () => {
 });
 
 describe("OpenRouterAdapter", () => {
+  const mockFetch = mock();
+  global.fetch = mockFetch as any;
+
+  beforeEach(() => {
+    mockFetch.mockClear();
+    mockCreate.mockClear();
+  });
+
   test("should analyze message and return NECESIDAD", async () => {
+    mockFetch.mockResolvedValueOnce({
+      json: () => Promise.resolve({ data: [{ id: "test-model:free", pricing: { prompt: "0" } }] })
+    });
+    
     mockCreate.mockResolvedValueOnce({
+      model: "test-model:free",
       choices: [
         {
           message: {
@@ -48,11 +61,16 @@ describe("OpenRouterAdapter", () => {
     expect(result).toEqual({
       type: "NECESIDAD",
       summary: "Need help moving couch",
-      model: "google/gemini-1.5-flash",
+      model: "test-model:free",
     });
   });
 
+
   test("should analyze message and return BRAIN", async () => {
+    mockFetch.mockResolvedValueOnce({
+      json: () => Promise.resolve({ data: [{ id: "test-pro-model", pricing: { prompt: "0" } }] })
+    });
+
     mockCreate.mockResolvedValueOnce({
       model: "google/gemini-1.5-pro",
       choices: [
@@ -76,8 +94,14 @@ describe("OpenRouterAdapter", () => {
     });
   });
 
+
   test("should handle malformed JSON gracefully", async () => {
+    mockFetch.mockResolvedValueOnce({
+      json: () => Promise.resolve({ data: [{ id: "test-model:free", pricing: { prompt: "0" } }] })
+    });
+
     mockCreate.mockResolvedValueOnce({
+      model: "test-model:free",
       choices: [
         {
           message: {
@@ -92,12 +116,18 @@ describe("OpenRouterAdapter", () => {
     expect(result).toEqual({
       type: "BRAIN",
       summary: "I am a test string.",
-      model: "google/gemini-1.5-flash",
+      model: "test-model:free",
     });
   });
 
+
   test("should handle missing choices/content gracefully", async () => {
+    mockFetch.mockResolvedValueOnce({
+      json: () => Promise.resolve({ data: [{ id: "test-model:free", pricing: { prompt: "0" } }] })
+    });
+
     mockCreate.mockResolvedValueOnce({
+      model: "test-model:free",
       choices: [],
     });
     const adapter = new OpenRouterAdapter("fake-api-key");
@@ -106,7 +136,8 @@ describe("OpenRouterAdapter", () => {
     expect(result).toEqual({
       type: "BRAIN",
       summary: "Another test string.",
-      model: "google/gemini-1.5-flash",
+      model: "test-model:free",
     });
   });
+
 });
