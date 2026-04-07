@@ -26,7 +26,7 @@ export class OpenRouterAdapter implements IAIService {
 
   async analyzeMessage(text: string): Promise<{ type: 'NECESIDAD' | 'BRAIN'; summary: string; model: string }> {
     const response = await this.openai.chat.completions.create({
-      model: "openrouter/free",
+      model: "google/gemini-2.0-flash-lite:free",
       messages: [
         {
           role: "system",
