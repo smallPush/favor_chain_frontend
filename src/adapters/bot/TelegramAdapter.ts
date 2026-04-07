@@ -67,8 +67,10 @@ export class TelegramAdapter {
             try {
               const member = await ctx.getChatMember(parseInt(entry.user_id));
               name = member.user.first_name;
-            } catch (e) {
+            } catch (err: unknown) {
               // Mantener ID como fallback
+              const errorMessage = err instanceof Error ? err.message : String(err);
+              console.warn(`No se pudo obtener el nombre del usuario ${entry.user_id}: ${errorMessage}`);
             }
           }
           
