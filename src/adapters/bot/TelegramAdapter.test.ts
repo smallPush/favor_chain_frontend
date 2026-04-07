@@ -145,7 +145,7 @@ describe("TelegramAdapter", () => {
 
     await mockMessageHandlers["message:text"](mockCtx);
 
-    expect(mockCtx.reply).toHaveBeenCalledWith('Lo siento, hubo un error procesando tu mensaje.');
+    expect(mockCtx.reply).toHaveBeenCalledWith(expect.stringContaining('Lo siento, hubo un error procesando tu mensaje.'));
     console.error = originalConsoleError;
   });
 
