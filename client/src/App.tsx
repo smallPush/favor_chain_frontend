@@ -52,14 +52,14 @@ function App() {
     
     try {
       const response = await getKarmaHistory(userId);
-      if ((response as any).error) {
-        setError((response as any).error);
+      if (response.error) {
+        setError(response.error);
         setData(null);
       } else {
         setData(response);
       }
-    } catch (err: any) {
-      setError(err.message || 'Error occurred');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error occurred');
       setData(null);
     } finally {
       setLoading(false);
