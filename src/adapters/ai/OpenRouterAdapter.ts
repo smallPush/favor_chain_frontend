@@ -78,12 +78,13 @@ export class OpenRouterAdapter implements IAIService {
     let body = response.choices[0]?.message?.content || "{}";
     body = body.replace(/```json/gi, "").replace(/```/g, "").trim();
 
-    let content: any = {};
+    let content: { type?: 'NECESIDAD' | 'BRAIN'; summary?: string } = {};
     try {
       const parsed = JSON.parse(body);
       content = (typeof parsed === "object" && parsed !== null) ? parsed : {};
-    } catch (e) {
-      console.warn("Failed to parse AI response body:", e);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.warn("Failed to parse AI response body:", errorMessage);
       content = {};
     }
 
