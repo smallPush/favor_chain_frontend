@@ -1,4 +1,4 @@
-import { describe, expect, test, mock } from "bun:test";
+import { describe, expect, test, mock, beforeEach } from "bun:test";
 import { TelegramAdapter } from "./TelegramAdapter";
 import type { ProcessUserMessage } from "../../domain/useCases/ProcessUserMessage";
 
@@ -18,6 +18,7 @@ mock.module("grammy", () => {
       react = mock();
       api = {
         sendMessage: mock().mockResolvedValue({}),
+        stopPoll: mock().mockResolvedValue({}),
       };
       start = mockStart;
       me = { username: "FavorChainBot" };
@@ -29,14 +30,20 @@ describe("TelegramAdapter", () => {
   const mockFulfillFavor = {
     getPendingFavors: mock().mockResolvedValue([]),
     execute: mock().mockResolvedValue({ karmaAwarded: 10 }),
-    getFavorById: mock().mockResolvedValue({ description: "Test favor" }),
+    getFavorById: mock().mockResolvedValue({ description: "Test favor", status: "PENDING" }),
     createValidation: mock().mockResolvedValue({}),
+    getValidation: mock().mockResolvedValue({ favorId: "favor-1", userId: "user-1", chatId: "chat-1" }),
+    incrementValidationVotes: mock().mockResolvedValue({ yesVotes: 1, noVotes: 0 }),
     resolveValidation: mock().mockResolvedValue({ chatId: "123" }),
     getLeaderboard: mock().mockResolvedValue([{ user_id: "123", karma: 100 }]),
   } as any;
 
+  beforeEach(() => {
+    mockFulfillFavor.resolveValidation.mockClear();
+    mockFulfillFavor.incrementValidationVotes.mockClear();
+  });
+
   test("should setup handlers and handle start command", async () => {
-    // Reset handlers
     mockCommandHandlers = {};
     mockMessageHandlers = {};
 
@@ -194,6 +201,33 @@ describe("TelegramAdapter", () => {
 
     await mockMessageHandlers["poll"](mockCtx);
 
+    expect(mockFulfillFavor.resolveValidation).toHaveBeenCalledWith("poll-1", true);
+  });
+
+  test("should handle poll_answer with majority", async () => {
+    const mockProcessUserMessage = {} as any;
+    const adapter = new TelegramAdapter("fake-token", mockProcessUserMessage, mockFulfillFavor);
+
+    const mockCtx = {
+      pollAnswer: {
+        poll_id: "poll-1",
+        option_ids: [0], // Yes
+      },
+      api: {
+        getChatMemberCount: mock().mockResolvedValue(3), // Threshold will be 2
+        sendMessage: mock().mockResolvedValue({}),
+        stopPoll: mock().mockResolvedValue({}),
+      },
+    } as any;
+
+    // Primer voto (Yes=1, No=0)
+    mockFulfillFavor.incrementValidationVotes.mockResolvedValueOnce({ yesVotes: 1, noVotes: 0 });
+    await mockMessageHandlers["poll_answer"](mockCtx);
+    expect(mockFulfillFavor.resolveValidation).not.toHaveBeenCalled();
+
+    // Segundo voto (Yes=2, No=0) -> Supera threshold (Math.floor(3/2)+1 = 2)
+    mockFulfillFavor.incrementValidationVotes.mockResolvedValueOnce({ yesVotes: 2, noVotes: 0 });
+    await mockMessageHandlers["poll_answer"](mockCtx);
     expect(mockFulfillFavor.resolveValidation).toHaveBeenCalledWith("poll-1", true);
   });
 });
