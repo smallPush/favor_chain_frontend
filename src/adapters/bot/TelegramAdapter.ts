@@ -1,4 +1,4 @@
-import { Bot, InlineKeyboard } from "grammy";
+import { Bot, InlineKeyboard, Context } from "grammy";
 import type { ProcessUserMessage } from "../../domain/useCases/ProcessUserMessage";
 import type { FulfillFavor } from "../../domain/useCases/FulfillFavor";
 
@@ -14,7 +14,7 @@ export class TelegramAdapter {
     this.setupHandlers();
   }
 
-  private async listFavors(ctx: any) {
+  private async listFavors(ctx: Context) {
     try {
       const favors = await this.fulfillFavor.getPendingFavors();
       
