@@ -12,6 +12,7 @@ export interface KarmaResponse {
   userId: string;
   karma: number;
   favors: Favor[];
+  error?: string;
 }
 
 export const getKarmaHistory = async (userId: string): Promise<KarmaResponse> => {
