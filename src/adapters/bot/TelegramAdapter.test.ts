@@ -187,7 +187,7 @@ describe("TelegramAdapter", () => {
     expect(mockFulfillFavor.createValidation).toHaveBeenCalled();
   });
 
-  test("should handle poll result", async () => {
+  test("should handle poll resolution when closed", async () => {
     const mockProcessUserMessage = {} as any;
     const adapter = new TelegramAdapter("fake-token", mockProcessUserMessage, mockFulfillFavor);
 
@@ -197,6 +197,9 @@ describe("TelegramAdapter", () => {
         is_closed: true, 
         options: [{ voter_count: 5 }, { voter_count: 0 }] 
       },
+      api: {
+        sendMessage: mock().mockResolvedValue({}),
+      }
     };
 
     await mockMessageHandlers["poll"](mockCtx);
@@ -204,30 +207,27 @@ describe("TelegramAdapter", () => {
     expect(mockFulfillFavor.resolveValidation).toHaveBeenCalledWith("poll-1", true);
   });
 
-  test("should handle poll_answer with majority", async () => {
+  test("should handle real-time poll majority", async () => {
     const mockProcessUserMessage = {} as any;
     const adapter = new TelegramAdapter("fake-token", mockProcessUserMessage, mockFulfillFavor);
 
     const mockCtx = {
-      pollAnswer: {
-        poll_id: "poll-1",
-        option_ids: [0], // Yes
+      poll: {
+        id: "poll-1",
+        is_closed: false,
+        options: [{ voter_count: 2 }, { voter_count: 0 }], // 2 'Yes' votes
       },
       api: {
-        getChatMemberCount: mock().mockResolvedValue(3), // Threshold will be 2
+        getChatMemberCount: mock().mockResolvedValue(3), // Threshold is 2
         sendMessage: mock().mockResolvedValue({}),
-        stopPoll: mock().mockResolvedValue({}),
       },
-    } as any;
+    };
 
-    // Primer voto (Yes=1, No=0)
-    mockFulfillFavor.incrementValidationVotes.mockResolvedValueOnce({ yesVotes: 1, noVotes: 0 });
-    await mockMessageHandlers["poll_answer"](mockCtx);
-    expect(mockFulfillFavor.resolveValidation).not.toHaveBeenCalled();
+    // Mock resolveValidation to return something so it succeeds
+    mockFulfillFavor.resolveValidation.mockResolvedValueOnce({ chatId: "123", favorId: "favor-1", userId: "user-1" });
 
-    // Segundo voto (Yes=2, No=0) -> Supera threshold (Math.floor(3/2)+1 = 2)
-    mockFulfillFavor.incrementValidationVotes.mockResolvedValueOnce({ yesVotes: 2, noVotes: 0 });
-    await mockMessageHandlers["poll_answer"](mockCtx);
+    await mockMessageHandlers["poll"](mockCtx);
+
     expect(mockFulfillFavor.resolveValidation).toHaveBeenCalledWith("poll-1", true);
   });
 });
