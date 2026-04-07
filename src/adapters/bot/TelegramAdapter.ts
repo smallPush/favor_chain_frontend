@@ -22,14 +22,16 @@ export class TelegramAdapter {
         return ctx.reply("No hay favores pendientes en este momento. ¡Sé el primero en pedir uno!");
       }
 
-      await ctx.reply("🌟 **Favores Pendientes** 🌟\nAquí tienes lo que otros necesitan:");
+      let message = "🌟 **Favores Pendientes** 🌟\nAquí tienes lo que otros necesitan:\n\n";
+      const keyboard = new InlineKeyboard();
 
-      for (const favor of favors) {
-        const keyboard = new InlineKeyboard()
-          .text("✅ ¡Yo lo hago!", `fulfill_${favor.id}`);
-        
-        await ctx.reply(`👉 ${favor.description}`, { reply_markup: keyboard });
+      for (let i = 0; i < favors.length; i++) {
+        const favor = favors[i];
+        message += `${i + 1}. 👉 ${favor.description}\n`;
+        keyboard.text(`✅ Hacer el #${i + 1}`, `fulfill_${favor.id}`).row();
       }
+
+      await ctx.reply(message, { reply_markup: keyboard });
     } catch (error) {
       console.error(error);
       await ctx.reply("Error al obtener la lista de favores.");
