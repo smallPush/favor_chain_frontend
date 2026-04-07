@@ -35,7 +35,11 @@ const bot = new TelegramAdapter(TELEGRAM_TOKEN, processUserMessage, fulfillFavor
 
 // 4. Iniciar Servidor API (ElysiaJS)
 const app = new Elysia()
-  .use(cors())
+  .use(cors({
+    origin: process.env.CORS_ORIGIN
+      ? process.env.CORS_ORIGIN.split(',')
+      : 'http://localhost:5173'
+  }))
   .post("/verify-subscription", async ({ body }) => {
     const karma = await dbService.getUserKarma(body.userId, body.chatId || "global");
     return { userId: body.userId, karma };
