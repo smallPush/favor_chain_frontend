@@ -6,7 +6,6 @@ import { SupabaseAdapter } from "./adapters/db/SupabaseAdapter";
 import { TelegramAdapter } from "./adapters/bot/TelegramAdapter";
 import { ProcessUserMessage } from "./domain/useCases/ProcessUserMessage";
 import { FulfillFavor } from "./domain/useCases/FulfillFavor";
-import { setupDatabase } from "./adapters/db/setupDatabase";
 
 // Configuración
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || "";
@@ -17,10 +16,6 @@ const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || "";
 console.log("🔍 Depuración de variables:");
 console.log("- SUPABASE_URL:", SUPABASE_URL ? "✅ Cargada" : "❌ VACÍA");
 console.log("- TELEGRAM_TOKEN:", TELEGRAM_TOKEN ? `✅ Cargada (Empieza por: ${TELEGRAM_TOKEN.substring(0, 5)}...)` : "❌ VACÍA");
-
-
-// 🗄️ Iniciar Auto-Migración (Desactivado por falta de IPv6 en el servidor/red)
-// await setupDatabase();
 
 // 1. Instanciar Adaptadores (Infraestructura)
 const aiService = new OpenRouterAdapter(OPENROUTER_API_KEY);
