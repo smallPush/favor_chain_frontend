@@ -74,4 +74,31 @@ describe("SupabaseAdapter", () => {
     await adapter.saveFavor("user-1", "Need help moving", 10, "NECESIDAD", "input", "model", "chat-1");
     expect(true).toBe(true);
   });
+
+  test("should get leaderboard successfully", async () => {
+    const adapter = new SupabaseAdapter("fake-url", "fake-key");
+    const mockData = [
+      { user_id: "user-1", karma: 100, user_name: "Alice" },
+      { user_id: "user-2", karma: 50, user_name: "Bob" },
+    ];
+    mockSupabaseResponse = { data: mockData, error: null };
+
+    const leaderboard = await adapter.getLeaderboard("chat-1");
+
+    expect(leaderboard).toEqual(mockData);
+  });
+
+  test("should return empty array and log error when getLeaderboard encounters a database error", async () => {
+    const adapter = new SupabaseAdapter("fake-url", "fake-key");
+    const consoleErrorSpy = spyOn(console, "error").mockImplementation(() => {});
+
+    mockSupabaseResponse = { data: null, error: { message: "Simulated Leaderboard Error" } };
+
+    const leaderboard = await adapter.getLeaderboard("chat-1");
+
+    expect(leaderboard).toEqual([]);
+    expect(consoleErrorSpy).toHaveBeenCalledWith("❌ Error al obtener el ranking:", "Simulated Leaderboard Error");
+
+    consoleErrorSpy.mockRestore();
+  });
 });
