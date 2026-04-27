@@ -15,7 +15,7 @@ const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || "";
 
 console.log("🔍 Depuración de variables:");
 console.log("- SUPABASE_URL:", SUPABASE_URL ? "✅ Cargada" : "❌ VACÍA");
-console.log("- TELEGRAM_TOKEN:", TELEGRAM_TOKEN ? `✅ Cargada (Empieza por: ${TELEGRAM_TOKEN.substring(0, 5)}...)` : "❌ VACÍA");
+console.log("- TELEGRAM_TOKEN:", TELEGRAM_TOKEN ? "✅ Cargada" : "❌ VACÍA");
 
 // 1. Instanciar Adaptadores (Infraestructura)
 const aiService = new OpenRouterAdapter(OPENROUTER_API_KEY);
