@@ -1,6 +1,6 @@
 // Archivo: src/adapters/db/SupabaseAdapter.ts
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import type { DatabaseService } from "../../domain/ports/DatabaseService";
+import type { DatabaseService, Favor } from "../../domain/ports/DatabaseService";
 
 export class SupabaseAdapter implements DatabaseService {
   private client: SupabaseClient;
@@ -30,7 +30,7 @@ export class SupabaseAdapter implements DatabaseService {
     return (data || []).reduce((sum, row) => sum + (row.karma || 0), 0);
   }
 
-  async getUserFavors(userId: string, chatId: string): Promise<any[]> {
+  async getUserFavors(userId: string, chatId: string): Promise<Favor[]> {
     const query = this.client
       .from("favors")
       .select("id, user_id, chat_id, description, karma_awarded, entry_type, status, completed_by, created_at")
@@ -47,10 +47,10 @@ export class SupabaseAdapter implements DatabaseService {
       console.error("❌ Error al obtener favores del usuario:", error.message);
       return [];
     }
-    return data || [];
+    return (data as Favor[]) || [];
   }
 
-  async getPendingFavors(): Promise<any[]> {
+  async getPendingFavors(): Promise<Favor[]> {
     const { data, error } = await this.client
       .from("favors")
       .select("id, user_id, description, karma_awarded, entry_type, status, created_at")
@@ -62,10 +62,10 @@ export class SupabaseAdapter implements DatabaseService {
       console.error("❌ Error al obtener favores pendientes:", error.message);
       return [];
     }
-    return data || [];
+    return (data as Favor[]) || [];
   }
 
-  async getRecentLogs(limit: number = 50): Promise<any[]> {
+  async getRecentLogs(limit: number = 50): Promise<Favor[]> {
     const { data, error } = await this.client
       .from("favors")
       .select("*")
@@ -76,7 +76,7 @@ export class SupabaseAdapter implements DatabaseService {
       console.error("❌ Error al obtener logs recientes:", error.message);
       return [];
     }
-    return data || [];
+    return (data as Favor[]) || [];
   }
 
   async saveFavor(userId: string, description: string, karma: number, type: 'NECESIDAD' | 'BRAIN', originalInput?: string, aiModel?: string, chatId?: string, userName?: string): Promise<void> {
@@ -114,7 +114,7 @@ export class SupabaseAdapter implements DatabaseService {
     }
   }
 
-  async getFavorById(favorId: string): Promise<any | null> {
+  async getFavorById(favorId: string): Promise<Favor | null> {
     const { data, error } = await this.client
       .from("favors")
       .select("*")
@@ -125,7 +125,7 @@ export class SupabaseAdapter implements DatabaseService {
       console.error("❌ Error al obtener favor por ID:", error.message);
       return null;
     }
-    return data;
+    return data as Favor;
   }
 
   async createValidation(pollId: string, favorId: string, userId: string, chatId: string, userName?: string): Promise<void> {
